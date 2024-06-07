@@ -17,6 +17,8 @@
 
 package net.momirealms.customcrops.api.event;
 
+import net.momirealms.customcrops.api.mechanic.item.Fertilizer;
+import net.momirealms.customcrops.api.mechanic.world.level.WorldPot;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
@@ -26,26 +28,30 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * An event that triggered when player is using fertilizers
+ * An event that triggered when player tries adding fertilizer to pot
  */
 public class FertilizerUseEvent extends PlayerEvent implements Cancellable {
 
     private static final HandlerList handlers = new HandlerList();
     private boolean cancelled;
     private final ItemStack itemInHand;
-    private final String fertilizerKey;
     private final Location location;
+    private final WorldPot pot;
+    private final Fertilizer fertilizer;
 
     public FertilizerUseEvent(
-            @NotNull Player who,
+            @NotNull Player player,
             @NotNull ItemStack itemInHand,
-            @NotNull String fertilizerKey,
-            @NotNull Location location
+            @NotNull Fertilizer fertilizer,
+            @NotNull Location location,
+            @NotNull WorldPot pot
     ) {
-        super(who);
+        super(player);
+        this.cancelled = false;
         this.itemInHand = itemInHand;
-        this.fertilizerKey = fertilizerKey;
+        this.fertilizer = fertilizer;
         this.location = location;
+        this.pot = pot;
     }
 
     @Override
@@ -55,34 +61,12 @@ public class FertilizerUseEvent extends PlayerEvent implements Cancellable {
 
     @Override
     public void setCancelled(boolean cancel) {
-        this.cancelled = cancel;
+        cancelled = cancel;
     }
 
-    /**
-     * Get the fertilizer item in hand
-     * @return fertilizer itemStack
-     */
-    @NotNull
-    public ItemStack getItemInHand() {
-        return itemInHand;
-    }
-
-    /**
-     * Get the fertilizer config key
-     * @return fertilizer key
-     */
-    @NotNull
-    public String getFertilizerKey() {
-        return fertilizerKey;
-    }
-
-    /**
-     * Get the pot location
-     * @return location
-     */
-    @NotNull
-    public Location getLocation() {
-        return location;
+    @Override
+    public @NotNull HandlerList getHandlers() {
+        return handlers;
     }
 
     @NotNull
@@ -90,9 +74,43 @@ public class FertilizerUseEvent extends PlayerEvent implements Cancellable {
         return handlers;
     }
 
+    /**
+     * Get the fertilizer item in hand
+     *
+     * @return item in hand
+     */
     @NotNull
-    @Override
-    public HandlerList getHandlers() {
-        return getHandlerList();
+    public ItemStack getItemInHand() {
+        return itemInHand;
+    }
+
+    /**
+     * Get the pot's location
+     *
+     * @return location
+     */
+    @NotNull
+    public Location getLocation() {
+        return location;
+    }
+
+    /**
+     * Get the pot's data
+     *
+     * @return pot data
+     */
+    @NotNull
+    public WorldPot getPot() {
+        return pot;
+    }
+
+    /**
+     * Get the fertilizer's config
+     *
+     * @return fertilizer config
+     */
+    @NotNull
+    public Fertilizer getFertilizer() {
+        return fertilizer;
     }
 }

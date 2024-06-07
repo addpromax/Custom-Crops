@@ -17,6 +17,8 @@
 
 package net.momirealms.customcrops.api.event;
 
+import net.momirealms.customcrops.api.mechanic.item.water.PassiveFillMethod;
+import net.momirealms.customcrops.api.mechanic.world.level.WorldSprinkler;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
@@ -26,28 +28,29 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * An event that triggered when filling a sprinkler
+ * An event that triggered when a sprinkler is watered by the fill-methods set in each sprinkler's config
  */
 public class SprinklerFillEvent extends PlayerEvent implements Cancellable {
 
     private static final HandlerList handlers = new HandlerList();
     private boolean cancelled;
     private final ItemStack itemInHand;
-    private int water;
     private final Location location;
-    private final String sprinklerKey;
+    private final PassiveFillMethod fillMethod;
+    private final WorldSprinkler sprinkler;
 
     public SprinklerFillEvent(
-            @NotNull Player who,
-            @NotNull String sprinklerKey,
+            @NotNull Player player,
             @NotNull ItemStack itemInHand,
-            int water,
-            @NotNull Location location) {
-        super(who);
+            @NotNull Location location,
+            @NotNull PassiveFillMethod fillMethod,
+            @NotNull WorldSprinkler sprinkler
+    ) {
+        super(player);
         this.itemInHand = itemInHand;
-        this.water = water;
         this.location = location;
-        this.sprinklerKey = sprinklerKey;
+        this.fillMethod = fillMethod;
+        this.sprinkler = sprinkler;
     }
 
     @Override
@@ -73,6 +76,7 @@ public class SprinklerFillEvent extends PlayerEvent implements Cancellable {
 
     /**
      * Get the item in player's hand
+     *
      * @return item in hand
      */
     @NotNull
@@ -82,6 +86,7 @@ public class SprinklerFillEvent extends PlayerEvent implements Cancellable {
 
     /**
      * Get the sprinkler location
+     *
      * @return location
      */
     @NotNull
@@ -90,27 +95,17 @@ public class SprinklerFillEvent extends PlayerEvent implements Cancellable {
     }
 
     /**
-     * Get the amount of water
-     * @return the amount of water that added to the sprinkler
-     */
-    public int getWater() {
-        return water;
-    }
-
-    /**
-     * Set the water that added to the sprinkler
-     * @param water water
-     */
-    public void setWater(int water) {
-        this.water = water;
-    }
-
-    /**
-     * Get the sprinkler config key
-     * @return sprinkler key
+     * Get the passive fill method
+     *
+     * @return passive fill method
      */
     @NotNull
-    public String getSprinklerKey() {
-        return sprinklerKey;
+    public PassiveFillMethod getFillMethod() {
+        return fillMethod;
+    }
+
+    @NotNull
+    public WorldSprinkler getSprinkler() {
+        return sprinkler;
     }
 }

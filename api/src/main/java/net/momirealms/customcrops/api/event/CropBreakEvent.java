@@ -17,8 +17,11 @@
 
 package net.momirealms.customcrops.api.event;
 
+import net.momirealms.customcrops.api.mechanic.misc.Reason;
+import net.momirealms.customcrops.api.mechanic.world.level.WorldCrop;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -32,21 +35,21 @@ public class CropBreakEvent extends Event implements Cancellable {
 
     private static final HandlerList handlers = new HandlerList();
     private boolean cancelled;
-    private final String cropItemID;
-    private final String cropKey;
     private final Location location;
+    private final WorldCrop worldCrop;
     private final Entity entity;
+    private final Reason reason;
 
     public CropBreakEvent(
             @Nullable Entity entity,
-            @NotNull String cropKey,
-            @NotNull String cropItemID,
-            @NotNull Location location
+            @NotNull Location location,
+            @NotNull WorldCrop worldCrop,
+            @NotNull Reason reason
     ) {
         this.entity = entity;
-        this.cropItemID = cropItemID;
         this.location = location;
-        this.cropKey = cropKey;
+        this.worldCrop = worldCrop;
+        this.reason = reason;
     }
 
     @Override
@@ -71,16 +74,18 @@ public class CropBreakEvent extends Event implements Cancellable {
     }
 
     /**
-     * Get the crop item id in IA/Oraxen
-     * @return item id
+     * Get the crop's data, it might be null if it's spawned by other plugins in the wild
+     *
+     * @return crop data
      */
-    @NotNull
-    public String getCropItemID() {
-        return cropItemID;
+    @Nullable
+    public WorldCrop getWorldCrop() {
+        return worldCrop;
     }
 
     /**
      * Get the crop location
+     *
      * @return location
      */
     @NotNull
@@ -89,7 +94,11 @@ public class CropBreakEvent extends Event implements Cancellable {
     }
 
     /**
-     * Would be null if the crop is not broken by an entity
+     * Get the entity that triggered the event
+     * This would be null if the crop is broken by respawn anchor
+     * The breaker can be a TNT, creeper.
+     * If the pot is a vanilla farmland, it can be trampled by entities
+     *
      * @return entity
      */
     @Nullable
@@ -97,12 +106,21 @@ public class CropBreakEvent extends Event implements Cancellable {
         return entity;
     }
 
+    @Nullable
+    public Player getPlayer() {
+        if (entity instanceof Player player) {
+            return player;
+        }
+        return null;
+    }
+
     /**
-     * Get the crop config key
-     * @return crop key
+     * Get the reason
+     *
+     * @return reason
      */
     @NotNull
-    public String getCropKey() {
-        return cropKey;
+    public Reason getReason() {
+        return reason;
     }
 }

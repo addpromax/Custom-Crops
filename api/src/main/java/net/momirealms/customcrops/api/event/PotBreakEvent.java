@@ -17,8 +17,11 @@
 
 package net.momirealms.customcrops.api.event;
 
+import net.momirealms.customcrops.api.mechanic.misc.Reason;
+import net.momirealms.customcrops.api.mechanic.world.level.WorldPot;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -33,17 +36,20 @@ public class PotBreakEvent extends Event implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
     private boolean cancelled;
     private final Location location;
-    private final String potKey;
+    private final WorldPot pot;
     private final Entity entity;
+    private final Reason reason;
 
     public PotBreakEvent(
             @Nullable Entity entity,
             @NotNull Location location,
-            @NotNull String potKey
+            @NotNull WorldPot pot,
+            @NotNull Reason reason
     ) {
         this.entity = entity;
         this.location = location;
-        this.potKey = potKey;
+        this.pot = pot;
+        this.reason = reason;
     }
 
     @Override
@@ -69,6 +75,7 @@ public class PotBreakEvent extends Event implements Cancellable {
 
     /**
      * Get the pot location
+     *
      * @return location
      */
     @NotNull
@@ -76,21 +83,32 @@ public class PotBreakEvent extends Event implements Cancellable {
         return location;
     }
 
-    /**
-     * Get the pot config key
-     * @return pot key
-     */
-    @NotNull
-    public String getPotKey() {
-        return potKey;
-    }
 
     /**
-     * It would be null if the event is not triggered by an entity
-     * @return entity
+     * Get the pot's data
+     *
+     * @return pot
      */
+    @NotNull
+    public WorldPot getPot() {
+        return pot;
+    }
+
     @Nullable
     public Entity getEntity() {
         return entity;
+    }
+
+    @Nullable
+    public Player getPlayer() {
+        if (entity instanceof Player player) {
+            return player;
+        }
+        return null;
+    }
+
+    @NotNull
+    public Reason getReason() {
+        return reason;
     }
 }

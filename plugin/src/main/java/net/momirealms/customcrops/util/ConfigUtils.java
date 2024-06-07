@@ -17,376 +17,283 @@
 
 package net.momirealms.customcrops.util;
 
-import dev.dejvokep.boostedyaml.YamlDocument;
-import dev.dejvokep.boostedyaml.dvs.versioning.BasicVersioning;
-import dev.dejvokep.boostedyaml.settings.dumper.DumperSettings;
-import dev.dejvokep.boostedyaml.settings.general.GeneralSettings;
-import dev.dejvokep.boostedyaml.settings.loader.LoaderSettings;
-import dev.dejvokep.boostedyaml.settings.updater.UpdaterSettings;
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.sound.Sound;
-import net.momirealms.customcrops.CustomCrops;
-import net.momirealms.customcrops.api.object.BoneMeal;
-import net.momirealms.customcrops.api.object.InteractCrop;
-import net.momirealms.customcrops.api.object.ItemMode;
-import net.momirealms.customcrops.api.object.Pair;
-import net.momirealms.customcrops.api.object.action.*;
-import net.momirealms.customcrops.api.object.basic.ConfigManager;
-import net.momirealms.customcrops.api.object.condition.Random;
-import net.momirealms.customcrops.api.object.condition.*;
-import net.momirealms.customcrops.api.object.crop.VariationCrop;
-import net.momirealms.customcrops.api.object.fill.PassiveFillMethod;
-import net.momirealms.customcrops.api.object.fill.PositiveFillMethod;
-import net.momirealms.customcrops.api.object.loot.Loot;
-import net.momirealms.customcrops.api.object.loot.OtherLoot;
-import net.momirealms.customcrops.api.object.loot.QualityLoot;
-import net.momirealms.customcrops.api.object.requirement.*;
-import net.momirealms.customcrops.api.object.season.CCSeason;
-import net.momirealms.customcrops.customplugin.Platform;
-import net.momirealms.customcrops.helper.Log;
-import org.bukkit.Particle;
-import org.bukkit.World;
+import com.google.common.base.Preconditions;
+import net.momirealms.customcrops.api.CustomCropsPlugin;
+import net.momirealms.customcrops.api.common.Pair;
+import net.momirealms.customcrops.api.manager.PlaceholderManager;
+import net.momirealms.customcrops.api.mechanic.action.Action;
+import net.momirealms.customcrops.api.mechanic.action.ActionTrigger;
+import net.momirealms.customcrops.api.mechanic.condition.Condition;
+import net.momirealms.customcrops.api.mechanic.condition.DeathConditions;
+import net.momirealms.customcrops.api.mechanic.item.BoneMeal;
+import net.momirealms.customcrops.api.mechanic.item.FertilizerType;
+import net.momirealms.customcrops.api.mechanic.item.ItemCarrier;
+import net.momirealms.customcrops.api.mechanic.item.water.PassiveFillMethod;
+import net.momirealms.customcrops.api.mechanic.item.water.PositiveFillMethod;
+import net.momirealms.customcrops.api.mechanic.misc.Value;
+import net.momirealms.customcrops.api.mechanic.requirement.Requirement;
+import net.momirealms.customcrops.api.mechanic.world.level.WorldSetting;
+import net.momirealms.customcrops.api.util.LogUtils;
+import net.momirealms.customcrops.mechanic.item.impl.CropConfig;
+import net.momirealms.customcrops.mechanic.misc.value.ExpressionValue;
+import net.momirealms.customcrops.mechanic.misc.value.PlainValue;
+import net.objecthunter.exp4j.ExpressionBuilder;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.intellij.lang.annotations.Subst;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.bukkit.entity.Player;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ConfigUtils {
 
+    private ConfigUtils() {}
+
+    public static YamlConfiguration getConfig(String file) {
+        File config = new File(CustomCropsPlugin.get().getDataFolder(), file);
+        if (!config.exists()) {
+            CustomCropsPlugin.get().saveResource(file, false);
+            addDefaultNamespace(config);
+        }
+        return YamlConfiguration.loadConfiguration(config);
+    }
+
+    public static WorldSetting getWorldSettingFromSection(ConfigurationSection section) {
+        return WorldSetting.of(
+                section.getBoolean("enable", true),
+                section.getInt("min-tick-unit", 300),
+                getRandomTickModeByString(section.getString("crop.mode")),
+                section.getInt("crop.tick-interval", 1),
+                getRandomTickModeByString(section.getString("pot.mode")),
+                section.getInt("pot.tick-interval", 2),
+                getRandomTickModeByString(section.getString("sprinkler.mode")),
+                section.getInt("sprinkler.tick-interval", 2),
+                section.getBoolean("offline-tick.enable", false),
+                section.getInt("offline-tick.max-offline-seconds", 1200),
+                section.getBoolean("season.enable", false),
+                section.getBoolean("season.auto-alternation", false),
+                section.getInt("season.duration", 28),
+                section.getInt("crop.max-per-chunk", 128),
+                section.getInt("pot.max-per-chunk", -1),
+                section.getInt("sprinkler.max-per-chunk", 32),
+                section.getInt("random-tick-speed", 0)
+        );
+    }
+
+    public static boolean getRandomTickModeByString(String str) {
+        if (str == null) {
+            return false;
+        }
+        if (str.equalsIgnoreCase("RANDOM_TICK")) {
+            return true;
+        }
+        if (str.equalsIgnoreCase("SCHEDULED_TICK")) {
+            return false;
+        }
+        throw new IllegalArgumentException("Invalid mode found when loading world settings: " + str);
+    }
+
+    public static boolean isVanillaItem(String item) {
+        char[] chars = item.toCharArray();
+        for (char character : chars) {
+            if ((character < 65 || character > 90) && character != 95) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
-     * Get a config by name
-     * @param config_path config's path
-     * @return yaml
+     * Converts an object into an ArrayList of strings.
+     *
+     * @param object The input object
+     * @return An ArrayList of strings
      */
-    public static YamlConfiguration getConfig(String config_path) {
-        File file = new File(CustomCrops.getInstance().getDataFolder(), config_path);
-        if (!file.exists()) {
-            CustomCrops.getInstance().saveResource(config_path, false);
-            if (CustomCrops.getInstance().getPlatform() == Platform.Oraxen) {
-                File generated = new File(CustomCrops.getInstance().getDataFolder(), config_path);
-                if (generated.exists() && generated.getName().endsWith(".yml")) {
-                    removeNamespace(generated);
-                }
-            }
+    @SuppressWarnings("unchecked")
+    public static ArrayList<String> stringListArgs(Object object) {
+        ArrayList<String> list = new ArrayList<>();
+        if (object instanceof String member) {
+            list.add(member);
+        } else if (object instanceof List<?> members) {
+            list.addAll((Collection<? extends String>) members);
+        } else if (object instanceof String[] strings) {
+            list.addAll(List.of(strings));
         }
-        return YamlConfiguration.loadConfiguration(file);
-    }
-
-    public static void removeNamespace(File file) {
-        String line;
-        StringBuilder sb = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append(System.lineSeparator());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try (BufferedWriter writer = new BufferedWriter(
-                new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
-            writer.write(sb.toString().replace(" customcrops:", " ").replace("CHORUS", "TRIPWIRE").replace("<font:customcrops:default>", "<font:minecraft:customcrops>"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return list;
     }
 
     /**
-     * Update config
-     * @param fileName config
+     * Converts an object into a double value.
+     *
+     * @param arg The input object
+     * @return A double value
      */
-    public static void update(String fileName){
-        try {
-            YamlDocument.create(new File(CustomCrops.getInstance().getDataFolder(), fileName), Objects.requireNonNull(CustomCrops.getInstance().getResource(fileName)), GeneralSettings.DEFAULT, LoaderSettings.builder().setAutoUpdate(true).build(), DumperSettings.DEFAULT, UpdaterSettings.builder().setVersioning(new BasicVersioning("config-version")).build());
-        } catch (IOException e){
-            Log.warn(e.getMessage());
+    public static double getDoubleValue(Object arg) {
+        if (arg instanceof Double d) {
+            return d;
+        } else if (arg instanceof Integer i) {
+            return Double.valueOf(i);
         }
+        return 0;
     }
 
     /**
-     * Create a data file if not exists
-     * @param file file path
-     * @return yaml data
+     * Converts an object into a "value".
+     *
+     * @param arg int / double / expression
+     * @return Value
      */
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    public static YamlConfiguration readData(File file) {
-        if (!file.exists()) {
-            try {
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-                AdventureUtils.consoleMessage("<red>[CustomFishing] Failed to generate data files!</red>");
-            }
+    public static Value getValue(Object arg) {
+        if (arg instanceof Integer i) {
+            return new PlainValue(i);
+        } else if (arg instanceof Double d) {
+            return new PlainValue(d);
+        } else if (arg instanceof String s) {
+            return new ExpressionValue(s);
         }
-        return YamlConfiguration.loadConfiguration(file);
+        throw new IllegalArgumentException("Illegal value type");
     }
 
-    @Nullable
-    public static DeathCondition[] getDeathConditions(ConfigurationSection section) {
-        if (section != null) {
-            List<DeathCondition> deathConditions = new ArrayList<>();
-            for (String key : section.getKeys(false)) {
-                String model = section.getString(key + ".model");
-                ConfigurationSection conditionSec = section.getConfigurationSection(key + ".conditions");
-                if (conditionSec == null) {
-                    AdventureUtils.consoleMessage("<red>[CustomCrops] No condition is set for: " + section.getCurrentPath());
-                    continue;
-                }
-                List<Condition> conditions = getConditions(conditionSec.getValues(false));
-                deathConditions.add(new DeathCondition(model, conditions.toArray(new Condition[0])));
-                if (model != null) CustomCrops.getInstance().getCropManager().registerDeadCrops(model);
-            }
-            return deathConditions.toArray(new DeathCondition[0]);
-        }
-        return null;
+    public static double getExpressionValue(Player player, String formula, Map<String, String> vars) {
+        formula = PlaceholderManager.getInstance().parse(player, formula, vars);
+        return new ExpressionBuilder(formula).build().evaluate();
     }
 
-    @Nullable
-    public static Condition[] getConditions(ConfigurationSection section) {
-        if (section != null) {
-            return getConditions(section.getValues(false)).toArray(new Condition[0]);
-        }
-        return null;
+    /**
+     * Splits a string into a pair of integers using the "~" delimiter.
+     *
+     * @param value The input string
+     * @return A Pair of integers
+     */
+    public static Pair<Integer, Integer> splitStringIntegerArgs(String value, String regex) {
+        String[] split = value.split(regex);
+        return Pair.of(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
     }
 
-    @NotNull
-    public static List<Condition> getConditions(Map<String, Object> map) {
-        List<Condition> conditions = new ArrayList<>();
-        map.forEach((key, value) -> {
-            if (key.startsWith("&&")) {
-                if (map.get(key) instanceof MemorySection map2) {
-                    conditions.add(new AndCondition(getConditions(map2.getValues(false))));
-                }
-            } else if (key.startsWith("||")) {
-                if (map.get(key) instanceof MemorySection map2) {
-                    conditions.add(new OrCondition(getConditions(map2.getValues(false))));
-                }
-            } else {
-                if (map.get(key) instanceof MemorySection map2) {
-                    String type = map2.getString("type");
-                    if (type == null) return;
-                    switch (type) {
-                        case "water_less_than" -> conditions.add(new WaterLessThan(map2.getInt("value")));
-                        case "water_more_than" -> conditions.add(new WaterMoreThan(map2.getInt("value")));
-                        case "unsuitable_season" -> {
-                            if (!ConfigManager.enableSeason) return;
-                            conditions.add(new WrongSeason(map2.getStringList("value").stream().map(s -> CCSeason.valueOf(s.toUpperCase(Locale.ENGLISH))).toList().toArray(new CCSeason[0])));
-                        }
-                        case "suitable_season" -> {
-                            if (!ConfigManager.enableSeason) return;
-                            conditions.add(new RightSeason(map2.getStringList("value").stream().map(s -> CCSeason.valueOf(s.toUpperCase(Locale.ENGLISH))).toList().toArray(new CCSeason[0])));
-                        }
-                        case "crow_attack" -> conditions.add(new CrowAttack(map2.getDouble("value.chance"), map2.getString("value.fly-model"), map2.getString("value.stand-model")));
-                        case "random" -> conditions.add(new Random(map2.getDouble("value")));
-                        case "weather" -> conditions.add(new Weather(map2.getStringList("value").toArray(new String[0])));
+    public static List<File> getFilesRecursively(File folder) {
+        List<File> ymlFiles = new ArrayList<>();
+        if (folder != null && folder.isDirectory()) {
+            File[] files = folder.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        ymlFiles.addAll(getFilesRecursively(file));
+                    } else if (file.getName().endsWith(".yml")) {
+                        ymlFiles.add(file);
                     }
                 }
             }
-        });
-        return conditions;
-    }
-
-    @Nullable
-    public static Requirement[] getRequirementsWithMsg(ConfigurationSection section) {
-        if (section != null) {
-            List<Requirement> requirements = new ArrayList<>();
-            for (String id : section.getKeys(false)) {
-                ConfigurationSection innerSec = section.getConfigurationSection(id);
-                if (innerSec == null) continue;
-                String type = innerSec.getString("type");
-                if (type == null) continue;
-                String[] msg = innerSec.getStringList("message").size() == 0 ? (innerSec.getString("message") == null ? null : new String[]{innerSec.getString("message")}) : innerSec.getStringList("message").toArray(new String[0]);
-                ConfigurationSection actionSec = innerSec.getConfigurationSection("actions");
-                switch (type) {
-                    case "biome" -> requirements.add(new BiomeImpl(msg, getActions(actionSec), new HashSet<>(innerSec.getStringList("value"))));
-                    case "!biome" -> requirements.add(new BlackBiomeImpl(msg, getActions(actionSec), new HashSet<>(innerSec.getStringList("value"))));
-                    case "weather" -> requirements.add(new WeatherImpl(msg, getActions(actionSec), innerSec.getStringList("value").toArray(new String[0])));
-                    case "ypos" -> requirements.add(new YPosImpl(msg, getActions(actionSec), innerSec.getStringList("value")));
-                    case "season" -> {
-                        if (!ConfigManager.enableSeason) continue;
-                        requirements.add(new SeasonImpl(msg, getActions(actionSec), innerSec.getStringList("value").stream().map(str -> CCSeason.valueOf(str.toUpperCase(Locale.ENGLISH))).collect(Collectors.toList())));
-                    }
-                    case "world" -> requirements.add(new WorldImpl(msg, getActions(actionSec), innerSec.getStringList("value")));
-                    case "permission" -> requirements.add(new PermissionImpl(msg, getActions(actionSec), innerSec.getString("value")));
-                    case "time" -> requirements.add(new TimeImpl(msg, getActions(actionSec), innerSec.getStringList("value")));
-                    case "skill-level" -> requirements.add(new SkillLevelImpl(msg, getActions(actionSec), innerSec.getInt("value")));
-                    case "job-level" -> requirements.add(new JobLevelImpl(msg, getActions(actionSec), innerSec.getInt("value.level"), innerSec.getString("value.job")));
-                    case "light" -> requirements.add(new LightLevelImpl(msg, getActions(actionSec), innerSec.getInt("value")));
-                    case "natural-light" -> requirements.add(new NaturalLightLevelImpl(msg, getActions(actionSec), innerSec.getInt("value")));
-                    case "date" -> requirements.add(new DateImpl(msg, getActions(actionSec), new HashSet<>(innerSec.getStringList("value"))));
-                    case "max-entity-amount-in-chunk" -> requirements.add(new EntityAmountInChunkImpl(msg, getActions(actionSec), innerSec.getInt("value")));
-                    case "papi-condition" -> requirements.add(new CustomPapi(msg, getActions(actionSec), Objects.requireNonNull(innerSec.getConfigurationSection("value")).getValues(false)));
-                }
-            }
-            return requirements.toArray(new Requirement[0]);
         }
-        return null;
+        return ymlFiles;
     }
 
-    @Nullable
     public static Action[] getActions(ConfigurationSection section) {
-        return getActions(section, null);
+        return CustomCropsPlugin.get().getActionManager().getActions(section);
     }
 
-    @Nullable
-    public static Action[] getActions(ConfigurationSection section, String model_id) {
+
+    public static HashMap<ActionTrigger, Action[]> getActionMap(ConfigurationSection section) {
+        HashMap<ActionTrigger, Action[]> map = new HashMap<>();
         if (section != null) {
-            List<Action> actions = new ArrayList<>();
-            for (String action_key : section.getKeys(false)) {
-                if (action_key.equals("requirements")) continue;
-                ConfigurationSection actionSec = section.getConfigurationSection(action_key);
-                if (actionSec == null) continue;
-                String type = actionSec.getString("type");
-                if (type == null) continue;
-                switch (type) {
-                    case "message" -> actions.add(new MessageActionImpl(
-                            actionSec.getStringList("value").toArray(new String[0]),
-                            actionSec.getDouble("chance", 1))
-                    );
-                    case "command" -> actions.add(new CommandActionImpl(
-                            actionSec.getStringList("value").toArray(new String[0]),
-                            actionSec.getDouble("chance", 1))
-                    );
-                    case "exp" -> actions.add(new VanillaXPImpl(
-                            actionSec.getInt("value"),
-                            false,
-                            actionSec.getDouble("chance", 1))
-                    );
-                    case "mending" -> actions.add(new VanillaXPImpl(
-                            actionSec.getInt("value"),
-                            true,
-                            actionSec.getDouble("chance", 1))
-                    );
-                    case "skill-xp" -> actions.add(new SkillXPImpl(
-                            actionSec.getDouble("value"),
-                            actionSec.getDouble("chance", 1))
-                    );
-                    case "job-xp" -> actions.add(new JobXPImpl(
-                            actionSec.getDouble("value.xp"),
-                            actionSec.getDouble("chance", 1),
-                            actionSec.getString("value.job"))
-                    );
-                    case "sound" -> actions.add(new SoundActionImpl(
-                            actionSec.getString("value.source"),
-                            actionSec.getString("value.key"),
-                            (float) actionSec.getDouble("value.volume"),
-                            (float) actionSec.getDouble("value.pitch"))
-                    );
-                    case "particle" -> actions.add(new ParticleImpl(
-                            Particle.valueOf(actionSec.getString("value.particle", "FLAME").toUpperCase(Locale.ENGLISH)),
-                            actionSec.getInt("value.amount"),
-                            actionSec.getDouble("value.offset"))
-                    );
-                    case "potion-effect" -> {
-                        PotionEffectType potionEffectType = PotionEffectType.getByName(actionSec.getString("value.type", "BLINDNESS").toUpperCase(Locale.ENGLISH));
-                        PotionEffect potionEffect = new PotionEffect(
-                                potionEffectType == null ? PotionEffectType.LUCK : potionEffectType,
-                                actionSec.getInt("value.duration"),
-                                actionSec.getInt("value.amplifier")
-                        );
-                        actions.add(new PotionEffectImpl(potionEffect, actionSec.getDouble("chance", 1)));
+            for (Map.Entry<String, Object> entry : section.getValues(false).entrySet()) {
+                if (entry.getValue() instanceof ConfigurationSection innerSection) {
+                    try {
+                        ActionTrigger trigger = ActionTrigger.valueOf(entry.getKey().toUpperCase(Locale.ENGLISH));
+                        map.put(trigger, getActions(innerSection));
+                    } catch (IllegalArgumentException e) {
+                        e.printStackTrace();
                     }
-                    case "drop-items" -> {
-                        ConfigurationSection lootSec = actionSec.getConfigurationSection("value");
-                        if (lootSec == null) continue;
-                        ArrayList<Loot> loots = new ArrayList<>();
-                        if (lootSec.contains("quality-crops")) {
-                            String[] qualityLoots = new String[ConfigManager.defaultRatio.length];
-                            for (int i = 0; i < ConfigManager.defaultRatio.length; i++) {
-                                qualityLoots[i] = lootSec.getString("quality-crops.items." + (i+1));
-                                if (qualityLoots[i] == null) {
-                                    AdventureUtils.consoleMessage("<red>[CustomCrops] Error found at: " + model_id + " quality-crops.items." + (i+1) + ", which can't be null");
-                                }
-                            }
-                            loots.add(new QualityLoot(
-                                    lootSec.getInt("quality-crops.min"),
-                                    lootSec.getInt("quality-crops.max"),
-                                    qualityLoots
-                            ));
-                        }
-                        if (lootSec.contains("other-items")) {
-                            ConfigurationSection otherLootSec = lootSec.getConfigurationSection("other-items");
-                            if (otherLootSec == null) continue;
-                            for (String inner_key : otherLootSec.getKeys(false)) {
-                                OtherLoot otherLoot = new OtherLoot(
-                                        otherLootSec.getInt(inner_key + ".min"),
-                                        otherLootSec.getInt(inner_key + ".max"),
-                                        otherLootSec.getString(inner_key + ".item"),
-                                        otherLootSec.getDouble(inner_key + ".chance")
-                                );
-                                loots.add(otherLoot);
-                            }
-                        }
-                        actions.add(new DropItemImpl(loots.toArray(new Loot[0])));
-                    }
-                    case "break" -> actions.add(new BreakImpl(
-                            actionSec.getBoolean("value", true),
-                            model_id)
-                    );
-                    case "replant" -> actions.add(new ReplantImpl(
-                            actionSec.getInt("value.point"),
-                            actionSec.getString("value.model"),
-                            actionSec.getString("value.crop")
-                    ));
-                    case "variation" -> {
-                        ConfigurationSection variationSec = actionSec.getConfigurationSection("value");
-                        if (variationSec == null) continue;
-                        ArrayList<VariationCrop> variationCrops = new ArrayList<>();
-                        for (String inner_key : variationSec.getKeys(false)) {
-                            VariationCrop variationCrop = new VariationCrop(
-                                    variationSec.getString(inner_key + ".item"),
-                                    ItemMode.valueOf(variationSec.getString(inner_key + ".type", "TripWire").toUpperCase(Locale.ENGLISH)),
-                                    variationSec.getDouble(inner_key + ".chance")
-                            );
-                            variationCrops.add(variationCrop);
-                        }
-                        actions.add(new VariationImpl(variationCrops.toArray(new VariationCrop[0])));
-                    }
-                    case "chain" -> actions.add(new ChainImpl(
-                            getActions(actionSec.getConfigurationSection("value"), model_id),
-                            getRequirementsWithMsg(actionSec.getConfigurationSection("requirements")),
-                            actionSec.getDouble("chance")
-                    ));
-                    case "swing-hand" -> actions.add(new SwingHandImpl());
-                    case "give-money" -> actions.add(new GiveMoneyImpl(
-                            actionSec.getDouble("value"),
-                            actionSec.getDouble("chance", 1)
-                    ));
                 }
             }
-            return actions.toArray(new Action[0]);
         }
-        return null;
+        return map;
     }
 
-    @Nullable
-    public static PassiveFillMethod[] getPassiveFillMethods(ConfigurationSection section) {
-        if (section == null) return null;
-        ArrayList<PassiveFillMethod> passiveFillMethods = new ArrayList<>();
-        for (String key : section.getKeys(false)) {
-            ConfigurationSection methodSec = section.getConfigurationSection(key);
-            if (methodSec == null) continue;
-            @Subst("namespace:key") String soundKey = methodSec.getString("sound", "minecraft:block.water.ambient");
-            Sound sound = methodSec.contains("sound") ? Sound.sound(Key.key(soundKey), Sound.Source.PLAYER, 1, 1) : null;
-            PassiveFillMethod passiveFillMethod = new PassiveFillMethod(
-                    methodSec.getString("item"),
-                    methodSec.getString("return"),
-                    methodSec.getInt("amount", 1),
-                    methodSec.contains("particle") ? Particle.valueOf(methodSec.getString("particle", "WATER_SPLASH").toUpperCase(Locale.ENGLISH)) : null,
-                    sound
-            );
-            passiveFillMethods.add(passiveFillMethod);
+    public static PositiveFillMethod[] getPositiveFillMethods(ConfigurationSection section) {
+        ArrayList<PositiveFillMethod> methods = new ArrayList<>();
+        if (section != null) {
+            for (Map.Entry<String, Object> entry : section.getValues(false).entrySet()) {
+                if (entry.getValue() instanceof ConfigurationSection innerSection) {
+                    PositiveFillMethod fillMethod = new PositiveFillMethod(
+                            Preconditions.checkNotNull(innerSection.getString("target"), "fill-method target should not be null"),
+                            innerSection.getInt("amount", 1),
+                            getActions(innerSection.getConfigurationSection("actions")),
+                            getRequirements(innerSection.getConfigurationSection("requirements"))
+                    );
+                    methods.add(fillMethod);
+                }
+            }
         }
-        return passiveFillMethods.toArray(new PassiveFillMethod[0]);
+        return methods.toArray(new PositiveFillMethod[0]);
+    }
+
+    public static PassiveFillMethod[] getPassiveFillMethods(ConfigurationSection section) {
+        ArrayList<PassiveFillMethod> methods = new ArrayList<>();
+        if (section != null) {
+            for (Map.Entry<String, Object> entry : section.getValues(false).entrySet()) {
+                if (entry.getValue() instanceof ConfigurationSection innerSection) {
+                    PassiveFillMethod fillMethod = new PassiveFillMethod(
+                            Preconditions.checkNotNull(innerSection.getString("item"), "fill-method item should not be null"),
+                            innerSection.getInt("item-amount", 1),
+                            innerSection.getString("return"),
+                            innerSection.getInt("return-amount", 1),
+                            innerSection.getInt("amount", 1),
+                            getActions(innerSection.getConfigurationSection("actions")),
+                            getRequirements(innerSection.getConfigurationSection("requirements"))
+                    );
+                    methods.add(fillMethod);
+                }
+            }
+        }
+        return methods.toArray(new PassiveFillMethod[0]);
+    }
+
+    public static HashMap<Integer, Integer> getInt2IntMap(ConfigurationSection section) {
+        HashMap<Integer, Integer> map = new HashMap<>();
+        if (section != null) {
+            for (Map.Entry<String, Object> entry : section.getValues(false).entrySet()) {
+                try {
+                    int i1 = Integer.parseInt(entry.getKey());
+                    if (entry.getValue() instanceof Integer i2) {
+                        map.put(i1, i2);
+                    }
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return map;
+    }
+
+    public static Requirement[] getRequirements(ConfigurationSection section) {
+        return CustomCropsPlugin.get().getRequirementManager().getRequirements(section, true);
+    }
+
+    public static HashMap<FertilizerType, Pair<String, String>> getFertilizedPotMap(ConfigurationSection section) {
+        HashMap<FertilizerType, Pair<String, String>> map = new HashMap<>();
+        if (section != null) {
+            for (Map.Entry<String, Object> entry : section.getValues(false).entrySet()) {
+                if (entry.getValue() instanceof ConfigurationSection innerSection) {
+                    FertilizerType type = switch (entry.getKey()) {
+                        case "quality" -> FertilizerType.QUALITY;
+                        case "yield-increase" -> FertilizerType.YIELD_INCREASE;
+                        case "variation-increase" -> FertilizerType.VARIATION;
+                        case "soil-retain" -> FertilizerType.SOIL_RETAIN;
+                        case "speed-grow" -> FertilizerType.SPEED_GROW;
+                        default -> null;
+                    };
+                    if (type != null) {
+                        map.put(type, Pair.of(
+                                Preconditions.checkNotNull(innerSection.getString("dry"), entry.getKey() + ".dry should not be null"),
+                                Preconditions.checkNotNull(innerSection.getString("wet"), entry.getKey() + ".wet should not be null")
+                        ));
+                    }
+                }
+            }
+        }
+        return map;
     }
 
     public static double[] getQualityRatio(String str) {
@@ -401,112 +308,108 @@ public class ConfigUtils {
         return ratio;
     }
 
-    public static boolean isVanillaItem(String item) {
-        char[] chars = item.toCharArray();
-        for (char character : chars) {
-            if ((character < 65 || character > 90) && character != 95) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Nullable
-    public static BoneMeal[] getBoneMeals(ConfigurationSection section) {
-        if (section == null) return null;
-        ArrayList<BoneMeal> boneMeals = new ArrayList<>();
-        for (String key : section.getKeys(false)) {
-            ConfigurationSection boneMealSec = section.getConfigurationSection(key);
-            if (boneMealSec == null) continue;
-            ConfigurationSection chanceSec = boneMealSec.getConfigurationSection("chance");
-            if (chanceSec == null) {
-                AdventureUtils.consoleMessage("chance is not properly set for custom bone meal at: " + boneMealSec.getCurrentPath());
-                continue;
-            }
-            ArrayList<Pair<Double, Integer>> pairs = new ArrayList<>();
-            for (String point : chanceSec.getKeys(false)) {
-                Pair<Double, Integer> pair = Pair.of(chanceSec.getDouble(point), Integer.parseInt(point));
+    public static List<Pair<Double, Integer>> getIntChancePair(ConfigurationSection section) {
+        ArrayList<Pair<Double, Integer>> pairs = new ArrayList<>();
+        if (section != null) {
+            for (String point : section.getKeys(false)) {
+                Pair<Double, Integer> pair = new Pair<>(section.getDouble(point), Integer.parseInt(point));
                 pairs.add(pair);
             }
-            @Subst("namespace:key") String soundKey = boneMealSec.getString("sound", "minecraft:item.bone_meal.use");
-            Sound sound = boneMealSec.contains("sound") ? Sound.sound(Key.key(soundKey), Sound.Source.PLAYER, 1, 1) : null;
-            BoneMeal boneMeal = new BoneMeal(
-                    boneMealSec.getString("item"),
-                    boneMealSec.getString("return"),
-                    pairs,
-                    sound,
-                    boneMealSec.contains("particle") ? Particle.valueOf(boneMealSec.getString("particle", "WATER_SPLASH").toUpperCase(Locale.ENGLISH)) : null
-            );
-            boneMeals.add(boneMeal);
+        }
+        return pairs;
+    }
+
+    public static BoneMeal[] getBoneMeals(ConfigurationSection section) {
+        ArrayList<BoneMeal> boneMeals = new ArrayList<>();
+        if (section != null) {
+            for (Map.Entry<String, Object> entry : section.getValues(false).entrySet()) {
+                if (entry.getValue() instanceof ConfigurationSection innerSection) {
+                    BoneMeal boneMeal = new BoneMeal(
+                            Preconditions.checkNotNull(innerSection.getString("item"), "Bone meal item can't be null"),
+                            innerSection.getInt("item-amount",1),
+                            innerSection.getString("return"),
+                            innerSection.getInt("return-amount",1),
+                            innerSection.getBoolean("dispenser",true),
+                            getIntChancePair(innerSection.getConfigurationSection("chance")),
+                            getActions(innerSection.getConfigurationSection("actions"))
+                    );
+                    boneMeals.add(boneMeal);
+                }
+            }
         }
         return boneMeals.toArray(new BoneMeal[0]);
     }
 
-    @Nullable
-    public static PositiveFillMethod[] getPositiveFillMethods(ConfigurationSection section) {
-        if (section == null) return null;
-        ArrayList<PositiveFillMethod> methods = new ArrayList<>();
-        for (String key : section.getKeys(false)) {
-            ConfigurationSection methodSec = section.getConfigurationSection(key);
-            if (methodSec == null) continue;
-            String id = methodSec.getString("target", "WATER");
-            @Subst("namespace:key") String soundKey = methodSec.getString("sound", "minecraft:item.bucket.fill");
-            Sound sound = Sound.sound(Key.key(soundKey), Sound.Source.PLAYER, 1, 1);
-            PositiveFillMethod method = new PositiveFillMethod(
-                    id,
-                    methodSec.getInt("amount"),
-                    methodSec.contains("particle") ? Particle.valueOf(methodSec.getString("particle", "WATER_SPLASH").toUpperCase(Locale.ENGLISH)) : null,
-                    sound
-            );
-            methods.add(method);
+    public static DeathConditions[] getDeathConditions(ConfigurationSection section, ItemCarrier original) {
+        ArrayList<DeathConditions> conditions = new ArrayList<>();
+        if (section != null) {
+            for (Map.Entry<String, Object> entry : section.getValues(false).entrySet()) {
+                if (entry.getValue() instanceof ConfigurationSection inner) {
+                    DeathConditions deathConditions = new DeathConditions(
+                            getConditions(inner.getConfigurationSection("conditions")),
+                            inner.getString("model"),
+                            Optional.ofNullable(inner.getString("type")).map(ItemCarrier::valueOf).orElse(original),
+                            inner.getInt("delay", 0)
+                    );
+                    conditions.add(deathConditions);
+                }
+            }
         }
-        return methods.toArray(new PositiveFillMethod[0]);
+        return conditions.toArray(new DeathConditions[0]);
     }
 
-    public static InteractCrop[] getInteractActions(ConfigurationSection section, String stageModel) {
-        if (section == null) return null;
-        ArrayList<InteractCrop> interactCrops = new ArrayList<>();
-        for (String key : section.getKeys(false)) {
-            ConfigurationSection innerSec = section.getConfigurationSection(key);
-            if (innerSec == null) continue;
-            InteractCrop interactCrop = new InteractCrop(
-                    innerSec.getString("item"),
-                    innerSec.getBoolean("reduce-amount", false),
-                    innerSec.getString("return"),
-                    getActions(innerSec.getConfigurationSection("actions"), stageModel),
-                    getRequirementsWithMsg(innerSec.getConfigurationSection("requirements"))
-            );
-            interactCrops.add(interactCrop);
-        }
-        return interactCrops.toArray(new InteractCrop[0]);
+    public static Condition[] getConditions(ConfigurationSection section) {
+        return CustomCropsPlugin.get().getConditionManager().getConditions(section);
     }
 
-    public static int rgbToDecimal(String rgba) {
-        String[] split = rgba.split(",");
-        int r = Integer.parseInt(split[0]);
-        int g = Integer.parseInt(split[1]);
-        int b = Integer.parseInt(split[2]);
-        int a = Integer.parseInt(split[3]);
-        return (a << 24) | (r << 16) | (g << 8) | b;
+    public static HashMap<Integer, CropConfig.CropStageConfig> getStageConfigs(ConfigurationSection section) {
+        HashMap<Integer, CropConfig.CropStageConfig> map = new HashMap<>();
+        if (section != null) {
+            for (Map.Entry<String, Object> entry : section.getValues(false).entrySet()) {
+                if (entry.getValue() instanceof ConfigurationSection inner) {
+                    try {
+                        int point = Integer.parseInt(entry.getKey());
+                        if (point < 0) {
+                            LogUtils.warn(entry.getKey() + " is not a valid number");
+                        } else {
+                            map.put(point, new CropConfig.CropStageConfig(
+                                    inner.getString("model"),
+                                    point,
+                                    inner.getDouble("hologram-offset-correction", 0d),
+                                    getActionMap(inner.getConfigurationSection("events")),
+                                    getRequirements(inner.getConfigurationSection("requirements.interact")),
+                                    getRequirements(inner.getConfigurationSection("requirements.break"))
+                            ));
+                        }
+                    } catch (NumberFormatException e) {
+                        LogUtils.warn(entry.getKey() + " is not a valid number");
+                    }
+                }
+            }
+        }
+        return map;
     }
 
-    public static File getFile(String world, String fileName) {
-        File file;
-        if (ConfigManager.worldFolderPath.equals("")) {
-            file = new File(CustomCrops.getInstance().getDataFolder().getParentFile().getParentFile(), world + File.separator + "customcrops" + File.separator + fileName);
-        } else {
-            file = new File(ConfigManager.worldFolderPath, world + File.separator + "customcrops" + File.separator + fileName);
+    public static void addDefaultNamespace(File file) {
+        boolean has = Bukkit.getPluginManager().getPlugin("ItemsAdder") != null;
+        String line;
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append(System.lineSeparator());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return file;
-    }
-
-    public static File getFile(World world, String fileName) {
-        File file;
-        if (ConfigManager.worldFolderPath.equals("")) {
-            file = new File(world.getWorldFolder(), "customcrops" + File.separator + fileName);
-        } else {
-            file = new File(ConfigManager.worldFolderPath, world.getName() + File.separator + "customcrops" + File.separator + fileName);
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
+            String finalStr = sb.toString();
+            if (!has) {
+                finalStr = finalStr.replace("CHORUS", "TRIPWIRE").replace("<font:customcrops:default>", "<font:minecraft:customcrops>");
+            }
+            writer.write(finalStr.replace("{0}", has ? "customcrops:" : ""));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return file;
     }
 }

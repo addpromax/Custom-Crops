@@ -17,20 +17,48 @@
 
 package net.momirealms.customcrops.util;
 
+import net.momirealms.customcrops.api.mechanic.misc.CRotation;
 import org.bukkit.Rotation;
 
 import java.util.Random;
 
 public class RotationUtils {
 
-    private static final Rotation[] rotations4 = {Rotation.NONE, Rotation.FLIPPED, Rotation.CLOCKWISE, Rotation.COUNTER_CLOCKWISE};
+    private static final Rotation[] rotationsI = {Rotation.NONE, Rotation.FLIPPED, Rotation.CLOCKWISE, Rotation.COUNTER_CLOCKWISE};
     private static final float[] rotationsF = {0f, 90f, 180f, -90f};
 
-    public static Rotation getRandomRotation() {
-        return rotations4[new Random().nextInt(4)];
+    public static Rotation getRandomBukkitRotation() {
+        return rotationsI[new Random().nextInt(4)];
     }
 
     public static float getRandomFloatRotation() {
         return rotationsF[new Random().nextInt(4)];
+    }
+
+    public static float getFloatRotation(CRotation cRotation) {
+        if (cRotation == CRotation.RANDOM) {
+            return getRandomFloatRotation();
+        }
+        return cRotation.getYaw();
+    }
+
+    public static Rotation getBukkitRotation(CRotation cRotation) {
+        switch (cRotation) {
+            case RANDOM -> {
+                return getRandomBukkitRotation();
+            }
+            case EAST -> {
+                return Rotation.COUNTER_CLOCKWISE;
+            }
+            case WEST -> {
+                return Rotation.CLOCKWISE;
+            }
+            case NORTH -> {
+                return Rotation.FLIPPED;
+            }
+            default -> {
+                return Rotation.NONE;
+            }
+        }
     }
 }

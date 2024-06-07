@@ -1,9 +1,10 @@
 name: CustomCrops
 version: '${version}'
-main: net.momirealms.customcrops.CustomCrops
+main: net.momirealms.customcrops.CustomCropsPluginImpl
 api-version: 1.17
 load: POSTWORLD
 authors: [ XiaoMoMi ]
+folia-supported: true
 depend:
   - ProtocolLib
 softdepend:
@@ -11,61 +12,33 @@ softdepend:
   - ItemsAdder
   - Oraxen
   - PlaceholderAPI
-  - mcMMO
-  - AureliumSkills
-  - MMOCore
-  - EcoSkills
-  - RealisticSeasons
-  - Jobs
-  - IridiumSkyblock
-  - SuperiorSkyBlock2
-  - Residence
-  - Kingdoms
-  - WorldGuard
-  - GriefDefender
-  - PlotSquared
-  - Towny
-  - Lands
-  - GriefPrevention
-  - CrashClaim
-  - BentoBox
-  - EcoJobs
   - BattlePass
   - BetonQuest
   - ClueScrolls
+  - RealisticSeasons
+  - AdvancedSeasons
+  - SlimeWorldManager
+  - HuskClaims
   - HuskTowns
-commands:
-  customcrops:
-    usage: /customcrops <args>
-    permission: customcrops.admin
-    aliases:
-      - ccrops
-permissions :
-  customcrops.*:
-    default: op
-    children:
-      customcrops.admin: true
-      customcrops.reload: true
-      customcrops.help: true
-      customcrops.about: true
-      customcrops.setdate: true
-      customcrops.setseason: true
-      customcrops.force: true
-      customcrops.migrate: true
-      customcrops.convert: true
-  customcrops.reload:
-    default: op
-  customcrops.help:
-    default: op
-  customcrops.about:
-    default: op
-  customcrops.setdate:
-    default: op
-  customcrops.setseason:
-    default: op
-  customcrops.force:
-    default: op
-  customcrops.migrate:
-    default: op
-  customcrops.convert:
-    default: op
+  - Residence
+  - BentoBox
+  - FabledSkyBlock
+  - CrashClaim
+  - GriefDefender
+  - GriefPrevention
+  - BentoBox
+  - IridiumSkyblock
+  - KingdomsX
+  - Landlord
+  - Lands
+  - PlotSquared
+  - ProtectionStones
+  - RedProtect
+  - Factions
+  - SuperiorSkyblock2
+  - Towny
+  - UltimateClaims
+  - UltimateClans
+  - uSkyBlock
+  - WorldGuard
+  - XClaim
