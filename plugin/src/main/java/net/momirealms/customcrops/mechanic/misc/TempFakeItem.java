@@ -22,7 +22,6 @@ import net.momirealms.customcrops.api.CustomCropsPlugin;
 import net.momirealms.customcrops.api.mechanic.world.SimpleLocation;
 import net.momirealms.customcrops.manager.PacketManager;
 import net.momirealms.customcrops.util.FakeEntityUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -43,7 +42,7 @@ public class TempFakeItem {
         SimpleLocation simpleLocation = SimpleLocation.of(location);
         ArrayList<Player> viewers = new ArrayList<>();
         if (viewer == null)
-            for (Player player : Bukkit.getOnlinePlayers()) {
+            for (Player player : location.getWorld().getPlayers()) {
                 if (simpleLocation.isNear(SimpleLocation.of(player.getLocation()), 48)) {
                     viewers.add(player);
                 }

@@ -53,19 +53,22 @@ import net.momirealms.customcrops.api.util.LogUtils;
 import net.momirealms.customcrops.compatibility.VaultHook;
 import net.momirealms.customcrops.manager.AdventureManagerImpl;
 import net.momirealms.customcrops.manager.HologramManager;
-import net.momirealms.customcrops.manager.PacketManager;
 import net.momirealms.customcrops.mechanic.item.impl.VariationCrop;
 import net.momirealms.customcrops.mechanic.misc.TempFakeItem;
 import net.momirealms.customcrops.mechanic.world.block.MemoryCrop;
 import net.momirealms.customcrops.util.ClassUtils;
 import net.momirealms.customcrops.util.ConfigUtils;
 import net.momirealms.customcrops.util.ItemUtils;
+import net.momirealms.sparrow.heart.SparrowHeart;
+import net.momirealms.sparrow.heart.feature.inventory.HandSlot;
 import org.bukkit.*;
 import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
@@ -432,10 +435,7 @@ public class ActionManagerImpl implements ActionManager {
             return state -> {
                 if (Math.random() > chance) return;
                 if (state.getPlayer() == null) return;
-                PacketContainer animationPacket = new PacketContainer(PacketType.Play.Server.ANIMATION);
-                animationPacket.getIntegers().write(0, state.getPlayer().getEntityId());
-                animationPacket.getIntegers().write(1, arg ? 0 : 3);
-                PacketManager.getInstance().send(state.getPlayer(), animationPacket);
+                SparrowHeart.getInstance().swingHand(state.getPlayer(), arg ? HandSlot.MAIN : HandSlot.OFF);
             };
         });
     }
@@ -827,10 +827,18 @@ public class ActionManagerImpl implements ActionManager {
             return state -> {
                 if (Math.random() > chance) return;
                 ItemStack itemStack = state.getItemInHand();
+
                 if (amount > 0) {
                     ItemUtils.increaseDurability(itemStack, amount);
                 } else {
-                    if (state.getPlayer().getGameMode() == GameMode.CREATIVE) return;
+                    if (state.getPlayer().getGameMode() == GameMode.CREATIVE || itemStack.getItemMeta().isUnbreakable()) return;
+
+                    ItemMeta previousMeta = itemStack.getItemMeta().clone();
+                    PlayerItemDamageEvent itemDamageEvent = new PlayerItemDamageEvent(state.getPlayer(), itemStack, amount);
+                    Bukkit.getPluginManager().callEvent(itemDamageEvent);
+                    if (!itemStack.getItemMeta().equals(previousMeta) || itemDamageEvent.isCancelled()) {
+                        return;
+                    }
                     ItemUtils.decreaseDurability(state.getPlayer(), itemStack, -amount);
                 }
             };

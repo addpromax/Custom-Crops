@@ -1810,7 +1810,7 @@ public class ItemManagerImpl implements ItemManager {
     @SuppressWarnings("DuplicatedCode")
     private void loadCrop(String key, ConfigurationSection section) {
         ItemCarrier itemCarrier = ItemCarrier.valueOf(section.getString("type").toUpperCase(Locale.ENGLISH));
-        if (itemCarrier != ItemCarrier.TRIPWIRE && itemCarrier != ItemCarrier.ITEM_DISPLAY && itemCarrier != ItemCarrier.ITEM_FRAME) {
+        if (itemCarrier != ItemCarrier.TRIPWIRE && itemCarrier != ItemCarrier.ITEM_DISPLAY && itemCarrier != ItemCarrier.ITEM_FRAME && itemCarrier != ItemCarrier.NOTE_BLOCK) {
             LogUtils.warn("Unsupported crop type: " + itemCarrier.name());
             return;
         }
@@ -2656,8 +2656,13 @@ public class ItemManagerImpl implements ItemManager {
 
     @Override
     public void updatePotState(Location location, Pot pot, boolean hasWater, Fertilizer fertilizer) {
+        Block block = location.getBlock();
+        Pot currentPot = getPotByBlock(block);
+        if (currentPot != pot) {
+            plugin.getWorldManager().removePotAt(SimpleLocation.of(location));
+            return;
+        }
         if (pot.isVanillaBlock()) {
-            Block block = location.getBlock();
             if (block.getBlockData() instanceof Farmland farmland) {
                 farmland.setMoisture(hasWater ? 7 : 0);
                 block.setBlockData(farmland);
