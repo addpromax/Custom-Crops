@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) <2022> <XiaoMoMi>
+ *  Copyright (C) <2024> <XiaoMoMi>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,57 +17,96 @@
 
 package net.momirealms.customcrops.api.event;
 
-import net.momirealms.customcrops.api.mechanic.item.water.PassiveFillMethod;
-import net.momirealms.customcrops.api.mechanic.world.level.WorldSprinkler;
+import net.momirealms.customcrops.api.core.mechanic.sprinkler.SprinklerConfig;
+import net.momirealms.customcrops.api.core.world.CustomCropsBlockState;
+import net.momirealms.customcrops.api.misc.water.WateringMethod;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.player.PlayerEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * An event that triggered when a sprinkler is watered by the fill-methods set in each sprinkler's config
+ * An event that is triggered when a sprinkler is filled with water using the fill methods defined in its configuration.
  */
 public class SprinklerFillEvent extends PlayerEvent implements Cancellable {
 
     private static final HandlerList handlers = new HandlerList();
     private boolean cancelled;
-    private final ItemStack itemInHand;
     private final Location location;
-    private final PassiveFillMethod fillMethod;
-    private final WorldSprinkler sprinkler;
+    private final SprinklerConfig config;
+    private final ItemStack itemInHand;
+    private final WateringMethod wateringMethod;
+    private final CustomCropsBlockState blockState;
+    private final EquipmentSlot hand;
 
+    /**
+     * Constructor for the SprinklerFillEvent.
+     *
+     * @param player         The player who is filling the sprinkler.
+     * @param itemInHand     The ItemStack representing the item in the player's hand.
+     * @param hand           The hand (main or offhand) used by the player for filling.
+     * @param location       The location of the sprinkler being filled.
+     * @param wateringMethod The method used to fill the sprinkler.
+     * @param blockState     The state of the sprinkler block before it is filled.
+     * @param config         The configuration of the sprinkler being filled.
+     */
     public SprinklerFillEvent(
             @NotNull Player player,
             @NotNull ItemStack itemInHand,
+            @NotNull EquipmentSlot hand,
             @NotNull Location location,
-            @NotNull PassiveFillMethod fillMethod,
-            @NotNull WorldSprinkler sprinkler
+            @NotNull WateringMethod wateringMethod,
+            @NotNull CustomCropsBlockState blockState,
+            @NotNull SprinklerConfig config
     ) {
         super(player);
-        this.itemInHand = itemInHand;
         this.location = location;
-        this.fillMethod = fillMethod;
-        this.sprinkler = sprinkler;
+        this.itemInHand = itemInHand;
+        this.wateringMethod = wateringMethod;
+        this.blockState = blockState;
+        this.config = config;
+        this.hand = hand;
     }
 
+    /**
+     * Returns whether the event is cancelled.
+     *
+     * @return true if the event is cancelled, false otherwise.
+     */
     @Override
     public boolean isCancelled() {
         return cancelled;
     }
 
+    /**
+     * Sets the cancelled state of the event.
+     *
+     * @param cancel true to cancel the event, false otherwise.
+     */
     @Override
     public void setCancelled(boolean cancel) {
-        this.cancelled = cancel;
+        cancelled = cancel;
     }
 
+    /**
+     * Gets the list of handlers for this event.
+     *
+     * @return the static handler list.
+     */
     @NotNull
     public static HandlerList getHandlerList() {
         return handlers;
     }
 
+    /**
+     * Gets the list of handlers for this event instance.
+     *
+     * @return the handler list.
+     */
     @NotNull
     @Override
     public HandlerList getHandlers() {
@@ -75,37 +114,62 @@ public class SprinklerFillEvent extends PlayerEvent implements Cancellable {
     }
 
     /**
-     * Get the item in player's hand
+     * Gets the location of the sprinkler being filled.
      *
-     * @return item in hand
+     * @return the location of the sprinkler.
      */
     @NotNull
-    public ItemStack getItemInHand() {
-        return itemInHand;
-    }
-
-    /**
-     * Get the sprinkler location
-     *
-     * @return location
-     */
-    @NotNull
-    public Location getLocation() {
+    public Location location() {
         return location;
     }
 
     /**
-     * Get the passive fill method
+     * Gets the ItemStack representing the item in the player's hand.
      *
-     * @return passive fill method
+     * @return the item in hand.
      */
     @NotNull
-    public PassiveFillMethod getFillMethod() {
-        return fillMethod;
+    public ItemStack itemInHand() {
+        return itemInHand;
     }
 
+    /**
+     * Gets the configuration of the sprinkler being filled.
+     *
+     * @return the sprinkler configuration.
+     */
     @NotNull
-    public WorldSprinkler getSprinkler() {
-        return sprinkler;
+    public SprinklerConfig sprinklerConfig() {
+        return config;
+    }
+
+    /**
+     * Gets the method used to fill the sprinkler.
+     *
+     * @return the watering method.
+     */
+    @NotNull
+    public WateringMethod wateringMethod() {
+        return wateringMethod;
+    }
+
+    /**
+     * Gets the state of the sprinkler block before it is filled.
+     *
+     * @return the block state of the sprinkler.
+     */
+    @NotNull
+    public CustomCropsBlockState blockState() {
+        return blockState;
+    }
+
+    /**
+     * Gets the hand (main or offhand) used by the player to fill the sprinkler.
+     *
+     * @return the equipment slot representing the hand used.
+     */
+    @NotNull
+    public EquipmentSlot hand() {
+        return hand;
     }
 }

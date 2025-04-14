@@ -1,76 +1,90 @@
-# Custom-Crops
+# Custom-Crops 🌱
+
 ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/Xiao-MoMi/Custom-Crops)
-![bStats Servers](https://img.shields.io/bstats/servers/16593)
-![bStats Players](https://img.shields.io/bstats/players/16593)
-![GitHub](https://img.shields.io/github/license/Xiao-MoMi/Custom-Crops)
-[![](https://jitpack.io/v/Xiao-MoMi/Custom-Crops.svg)](https://jitpack.io/#Xiao-MoMi/Custom-Crops)
 <a href="https://mo-mi.gitbook.io/xiaomomi-plugins/plugin-wiki/customcrops" alt="GitBook">
 <img src="https://img.shields.io/badge/docs-gitbook-brightgreen" alt="Gitbook"/>
 </a>
+[![Scc Count Badge](https://sloc.xyz/github/Xiao-MoMi/Custom-Crops/?category=codes)](https://github.com/Xiao-MoMi/Custom-Crops/)
+![Code Size](https://img.shields.io/github/languages/code-size/Xiao-MoMi/Custom-Crops)
+![bStats Servers](https://img.shields.io/bstats/servers/16593)
+![bStats Players](https://img.shields.io/bstats/players/16593)
+![GitHub](https://img.shields.io/github/license/Xiao-MoMi/Custom-Crops)
 
-Ultra-customizable planting experience for Minecraft servers
+## 📌 Overview
 
-### Support the developer
+CustomCrops is a high-performance **Paper plugin** designed to enhance the **planting experience** on Minecraft servers. It focuses on **customization** and **efficiency**, utilizing advanced techniques for optimal performance. 🌾
 
-https://afdian.net/@xiaomomi
+### 🔥 Key Features
 
-https://polymart.org/resource/customcrops.2625
+- **Zstd Compression**: Efficient data serialization comparable to Minecraft's native methods.
+- **⚡ Multi-threaded Tick System**: Improves server performance by distributing tasks across multiple threads.
+- **🛠️ Comprehensive API**: Enables developers to create custom block mechanisms with specific interactions and behaviors.
 
-## How to build
+---
+## 🔧 Building the Project
 
-### Windows
+### 💻 Command Line
 
-#### Command Line
-Install JDK 17 and set the JDK installation path to JAVA_HOME as an environment variable.\
-Start powershell and change directory to the project folder.\
-Execute ".\gradlew build" and get the jar at /target/CustomCrops-plugin-version.jar.
+1. Install **JDK 17 & 21**.
+2. Open a terminal and navigate to the project directory.
+3. Run:
+   ```sh
+   ./gradlew build
+   ```
+4. The generated artifact can be found in the `/target` folder.
 
-#### IDE
-Import the project and execute gradle build action.
+### 🛠️ Using an IDE
 
-## Use CustomCrops API
+1. Import the project into your preferred IDE.
+2. Execute the **Gradle build** action.
+3. Locate the artifact in the **/target** folder.
 
-### Maven
+---
+## 🤝 Contributing
 
-```
-<repositories>
-  <repository>
-    <id>jitpack</id>
-    <url>https://jitpack.io/</url>
-  </repository>
-</repositories>
-```
-```
-<dependencies>
-  <dependency>
-    <groupId>com.github.Xiao-MoMi</groupId>
-    <artifactId>Custom-Crops</artifactId>
-    <version>{LATEST}</version>
-    <scope>provided</scope>
-  </dependency>
-</dependencies>
-```
-### Gradle (Groovy)
+### 🌍 Translations
 
-```
+1. Clone the repository.
+2. Create a new language file in:
+   ```
+   /plugin/src/main/resources/translations
+   ```
+3. Submit a **pull request** with your changes for review. We appreciate your contributions! 💖
+
+### 🚀 Areas for Improvement
+
+- Enhance **thread scheduler efficiency** and reduce `ConcurrentHashMap` usage.
+- Optimize **map storage** in sections using a **palette system**.
+- Replace the current **sponge flow-nbt** library with a more efficient alternative (e.g., `sparrow-nbt`).
+- Implement an improved **region file format** with file headers and sectors for **random read/write operations** (**4.0 milestone**).
+
+---
+## 💖 Support the Developer
+
+If you enjoy using **CustomCrops**, consider supporting the developer! 🥰
+
+- [Polymart](https://polymart.org/resource/customcrops.2625/)
+- [BuiltByBit](https://builtbybit.com/resources/customcrops.36363/)
+- [Afdian](https://afdian.com/@xiaomomi/)
+
+---
+## 📚 CustomCrops API
+
+### 📌 Repository
+```kotlin
 repositories {
-    maven { url 'https://jitpack.io' }
+    maven("https://repo.momirealms.net/releases/")
 }
 ```
-```
-dependencies {
-    compileOnly 'com.github.Xiao-MoMi:Custom-Crops:{LATEST}'
-}
-```
-### Gradle (Kotlin)
 
-```
-repositories {
-    maven("https://jitpack.io/")
-}
-```
-```
+### 📌 Dependency
+```kotlin
 dependencies {
-    compileOnly("com.github.Xiao-MoMi:Custom-Crops:{LATEST}")
+    compileOnly("net.momirealms:custom-crops:3.6.29")
 }
 ```
+
+---
+## 🎉 Fun Fact
+
+I misspelled "mechanism" as "mechanic"—I should have caught that earlier! 😆

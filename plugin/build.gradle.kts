@@ -1,88 +1,71 @@
+repositories {
+    mavenCentral()
+    maven("https://repo.rapture.pw/repository/maven-releases/")
+    maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://jitpack.io/")
+    maven("https://oss.sonatype.org/content/repositories/snapshots")
+    maven("https://repo.extendedclip.com/content/repositories/placeholderapi/") // papi
+    maven("https://repo.momirealms.net/releases/")
+}
+
 dependencies {
     // Platform
-    compileOnly("dev.folia:folia-api:1.20.1-R0.1-SNAPSHOT")
-    compileOnly("com.infernalsuite.aswm:api:1.20.4-R0.1-SNAPSHOT")
+    compileOnly("dev.folia:folia-api:1.20.4-R0.1-SNAPSHOT")
+    // Some sub projects
+    implementation(project(":api"))  {
+        exclude("dev.dejvokep", "boosted-yaml")
+    }
+    implementation(project(":compatibility"))
+    implementation(project(":compatibility-asp-r1"))
+//    implementation(project(":compatibility-asp-r2"))
 
-    // Command
-    compileOnly("dev.jorel:commandapi-bukkit-core:9.4.1")
-
-    // Common hooks
-    compileOnly("me.clip:placeholderapi:2.11.5")
-    compileOnly("com.comphenix.protocol:ProtocolLib:5.1.0")
-    compileOnly("com.github.MilkBowl:VaultAPI:1.7")
-
-    // Utils
-    compileOnly("dev.dejvokep:boosted-yaml:1.3.4")
-    compileOnly("commons-io:commons-io:2.15.1")
-    compileOnly("com.google.code.gson:gson:2.10.1")
-    compileOnly("net.objecthunter:exp4j:0.4.8")
-
-    // eco
-    compileOnly("com.willfp:eco:6.67.2")
-    compileOnly("com.willfp:EcoJobs:3.47.1")
-    compileOnly("com.willfp:EcoSkills:3.21.0")
-    compileOnly("com.willfp:libreforge:4.48.1")
-
-    compileOnly("net.Indyuce:MMOCore-API:1.12-SNAPSHOT")
-    compileOnly("com.github.Archy-X:AureliumSkills:Beta1.3.23")
-    compileOnly("com.github.Zrips:Jobs:4.17.2")
-    compileOnly("dev.aurelium:auraskills-api-bukkit:2.0.0-SNAPSHOT")
-
-    // Items
-    compileOnly("com.github.LoneDev6:api-itemsadder:3.6.2-beta-r3-b")
-    compileOnly("pers.neige.neigeitems:NeigeItems:1.16.24")
-    compileOnly("net.Indyuce:MMOItems-API:6.9.2-SNAPSHOT")
-    compileOnly("io.lumine:MythicLib-dist:1.6-SNAPSHOT")
-    compileOnly("io.lumine:Mythic-Dist:5.3.5")
-    compileOnly("io.lumine:MythicCrucible-Dist:2.1.0-SNAPSHOT")
-
-    // Quests
-    compileOnly("org.betonquest:betonquest:2.0.0")
-
-    compileOnly(files("libs/BattlePass-4.0.6-api.jar"))
-    compileOnly(files("libs/ClueScrolls-api.jar"))
-    compileOnly(files("libs/AdvancedSeasons-API.jar"))
-    compileOnly(files("libs/zaphkiel-2.0.24.jar"))
-    compileOnly(files("libs/mcMMO-api.jar"))
-    compileOnly(files("libs/RealisticSeasons-api.jar"))
-    compileOnly("org.bstats:bstats-bukkit:3.0.2")
-
-    implementation(project(":api"))
-    implementation(project(":oraxen-legacy"))
-    implementation(project(":oraxen-j21"))
-    implementation(project(":legacy-api"))
-
-    implementation(files("libs/Sparrow-Heart-0.19.jar"))
-    implementation("net.kyori:adventure-api:4.17.0")
-    implementation("net.kyori:adventure-platform-bukkit:4.3.3")
-    implementation("net.kyori:adventure-text-minimessage:4.17.0")
-    implementation("net.kyori:adventure-text-serializer-legacy:4.17.0")
-    implementation("com.github.Xiao-MoMi:AntiGriefLib:0.11")
-//    implementation("com.github.Xiao-MoMi:Sparrow-Heart:0.16")
-    implementation("com.flowpowered:flow-nbt:2.0.2")
-    implementation("com.saicone.rtag:rtag:1.5.4")
-    implementation("com.saicone.rtag:rtag-item:1.5.4")
-    implementation("com.github.luben:zstd-jni:1.5.6-2")
+    implementation("net.kyori:adventure-api:${rootProject.properties["adventure_bundle_version"]}")
+    implementation("net.kyori:adventure-text-minimessage:${rootProject.properties["adventure_bundle_version"]}")
+    implementation("net.kyori:adventure-platform-bukkit:${rootProject.properties["adventure_platform_version"]}")
+    implementation("net.kyori:adventure-text-serializer-gson:${rootProject.properties["adventure_bundle_version"]}") {
+        exclude("com.google.code.gson", "gson")
+    }
+    implementation("net.kyori:adventure-text-serializer-legacy:${rootProject.properties["adventure_bundle_version"]}")
+    implementation("com.github.Xiao-MoMi:AntiGriefLib:${rootProject.properties["anti_grief_version"]}")
+    implementation("net.momirealms:sparrow-heart:${rootProject.properties["sparrow_heart_version"]}")
+    implementation("com.saicone.rtag:rtag:${rootProject.properties["rtag_version"]}")
+    implementation("com.saicone.rtag:rtag-item:${rootProject.properties["rtag_version"]}")
+    // TODO use sparrow-nbt
+    implementation("com.flowpowered:flow-nbt:${rootProject.properties["flow_nbt_version"]}") // do not relocate (compatibility with AdvancedSlimePaper)
+    compileOnly("org.incendo:cloud-core:${rootProject.properties["cloud_core_version"]}")
+    compileOnly("org.incendo:cloud-minecraft-extras:${rootProject.properties["cloud_minecraft_extras_version"]}")
+    compileOnly("org.incendo:cloud-paper:${rootProject.properties["cloud_paper_version"]}")
+    compileOnly("dev.dejvokep:boosted-yaml:${rootProject.properties["boosted_yaml_version"]}")
+    compileOnly("org.bstats:bstats-bukkit:${rootProject.properties["bstats_version"]}")
+    compileOnly("me.clip:placeholderapi:${rootProject.properties["placeholder_api_version"]}")
 }
 
 tasks {
     shadowJar {
-		relocate ("de.tr7zw.changeme", "net.momirealms.customcrops.libraries.changeme")
-		relocate ("dev.jorel.commandapi", "net.momirealms.customcrops.libraries.commandapi")
-		relocate ("net.kyori", "net.momirealms.customcrops.libraries")
-		relocate ("org.objenesis", "net.momirealms.customcrops.libraries.objenesis")
-		relocate ("org.bstats", "net.momirealms.customcrops.libraries.bstats")
-		relocate ("dev.dejvokep.boostedyaml", "net.momirealms.customcrops.libraries.boostedyaml")
-        relocate ("net.momirealms.sparrow.heart", "net.momirealms.customcrops.libraries.sparrow")
-		relocate ("net.momirealms.antigrieflib", "net.momirealms.customcrops.libraries.antigrieflib")
-		relocate ("net.objecthunter.exp4j", "net.momirealms.customcrops.libraries.exp4j")
-        relocate ("com.saicone.rtag", "net.momirealms.customcrops.libraries.rtag")
+        from(zipTree(project(":compatibility-nexo-r1").tasks.jar.get().archiveFile))
+        from(zipTree(project(":compatibility-oraxen-r1").tasks.jar.get().archiveFile))
+        from(zipTree(project(":compatibility-oraxen-r2").tasks.jar.get().archiveFile))
+        from(zipTree(project(":compatibility-itemsadder-r1").tasks.jar.get().archiveFile))
+        from(zipTree(project(":compatibility-itemsadder-r2").tasks.jar.get().archiveFile))
+        from(zipTree(project(":compatibility-crucible-r1").tasks.jar.get().archiveFile))
+        from(zipTree(project(":compatibility-craftengine-r1").tasks.jar.get().archiveFile))
+        archiveFileName = "CustomCrops-${rootProject.properties["project_version"]}.jar"
+        destinationDirectory.set(file("$rootDir/target"))
+        relocate("net.kyori", "net.momirealms.customcrops.libraries")
+        relocate("org.objenesis", "net.momirealms.customcrops.libraries.objenesis")
+        relocate("org.bstats", "net.momirealms.customcrops.libraries.bstats")
+        relocate("dev.dejvokep.boostedyaml", "net.momirealms.customcrops.libraries.boostedyaml")
+        relocate("net.momirealms.sparrow.heart", "net.momirealms.customcrops.libraries.sparrow")
+        relocate("net.momirealms.antigrieflib", "net.momirealms.customcrops.libraries.antigrieflib")
+        relocate("net.objecthunter.exp4j", "net.momirealms.customcrops.libraries.exp4j")
+        relocate("com.saicone.rtag", "net.momirealms.customcrops.libraries.rtag")
+        relocate("com.github.benmanes.caffeine", "net.momirealms.customcrops.libraries.caffeine")
+        relocate("org.incendo", "net.momirealms.customcrops.libraries")
     }
 }
 
-tasks.withType<JavaCompile> {
-    options.encoding = "UTF-8"
-    options.release.set(17)
+artifacts {
+    archives(tasks.shadowJar)
 }
 
 java {
@@ -91,4 +74,10 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
     }
+}
+
+tasks.withType<JavaCompile> {
+    options.encoding = "UTF-8"
+    options.release.set(17)
+    dependsOn(tasks.clean)
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) <2022> <XiaoMoMi>
+ *  Copyright (C) <2024> <XiaoMoMi>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,11 +17,11 @@
 
 package net.momirealms.customcrops.api.event;
 
-import net.momirealms.customcrops.api.mechanic.misc.Reason;
-import net.momirealms.customcrops.api.mechanic.world.level.WorldScarecrow;
+import net.momirealms.customcrops.api.core.block.BreakReason;
+import net.momirealms.customcrops.api.core.world.CustomCropsBlockState;
 import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -29,44 +29,80 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * An event that triggered when breaking a scarecrow
+ * An event that is triggered when a scarecrow is broken in the CustomCrops plugin.
  */
 public class ScarecrowBreakEvent extends Event implements Cancellable {
 
     private static final HandlerList handlers = new HandlerList();
     private boolean cancelled;
     private final Location location;
-    private final Entity entity;
-    private final Reason reason;
-    private final WorldScarecrow scarecrow;
+    private final Entity entityBreaker;
+    private final Block blockBreaker;
+    private final BreakReason reason;
+    private final CustomCropsBlockState blockState;
+    private final String scarecrowItemID;
 
+    /**
+     * Constructor for the ScarecrowBreakEvent.
+     *
+     * @param entityBreaker   The entity that caused the scarecrow to break, if applicable (can be null).
+     * @param blockBreaker    The block that caused the scarecrow to break, if applicable (can be null).
+     * @param location        The location of the scarecrow being broken.
+     * @param scarecrowItemID The item ID representing the scarecrow type being broken.
+     * @param blockState      The state of the scarecrow block before it was broken.
+     * @param reason          The reason why the scarecrow was broken.
+     */
     public ScarecrowBreakEvent(
-            @Nullable Entity entity,
+            @Nullable Entity entityBreaker,
+            @Nullable Block blockBreaker,
             @NotNull Location location,
-            @NotNull WorldScarecrow scarecrow,
-            @NotNull Reason reason
+            @NotNull String scarecrowItemID,
+            @NotNull CustomCropsBlockState blockState,
+            @NotNull BreakReason reason
     ) {
         this.location = location;
+        this.entityBreaker = entityBreaker;
+        this.blockBreaker = blockBreaker;
         this.reason = reason;
-        this.entity = entity;
-        this.scarecrow = scarecrow;
+        this.blockState = blockState;
+        this.scarecrowItemID = scarecrowItemID;
     }
 
+    /**
+     * Returns whether the event is cancelled.
+     *
+     * @return true if the event is cancelled, false otherwise.
+     */
     @Override
     public boolean isCancelled() {
         return cancelled;
     }
 
+    /**
+     * Sets the cancelled state of the event.
+     *
+     * @param cancel true to cancel the event, false otherwise.
+     */
     @Override
     public void setCancelled(boolean cancel) {
         this.cancelled = cancel;
     }
 
+    /**
+     * Gets the list of handlers for this event.
+     *
+     * @return the static handler list.
+     */
     @NotNull
     public static HandlerList getHandlerList() {
         return handlers;
     }
 
+    /**
+     * Gets the list of handlers for this event instance.
+     *
+     * @return the handler list.
+     */
     @NotNull
     @Override
     public HandlerList getHandlers() {
@@ -74,35 +110,61 @@ public class ScarecrowBreakEvent extends Event implements Cancellable {
     }
 
     /**
-     * Get the scarecrow location
+     * Gets the location of the scarecrow being broken.
      *
-     * @return location
+     * @return the location of the scarecrow.
      */
     @NotNull
-    public Location getLocation() {
+    public Location location() {
         return location;
     }
 
+    /**
+     * Gets the entity responsible for breaking the scarecrow, if applicable.
+     *
+     * @return the entity that caused the break, or null if not applicable.
+     */
     @Nullable
-    public Entity getEntity() {
-        return entity;
+    public Entity entityBreaker() {
+        return entityBreaker;
     }
 
+    /**
+     * Gets the block responsible for breaking the scarecrow, if applicable.
+     *
+     * @return the block that caused the break, or null if not applicable.
+     */
     @Nullable
-    public Player getPlayer() {
-        if (entity instanceof Player player) {
-            return player;
-        }
-        return null;
+    public Block blockBreaker() {
+        return blockBreaker;
     }
 
+    /**
+     * Gets the reason for the scarecrow breakage.
+     *
+     * @return the reason for the break.
+     */
     @NotNull
-    public Reason getReason() {
+    public BreakReason reason() {
         return reason;
     }
 
+    /**
+     * Gets the state of the scarecrow block before it was broken.
+     *
+     * @return the block state of the scarecrow.
+     */
     @NotNull
-    public WorldScarecrow getScarecrow() {
-        return scarecrow;
+    public CustomCropsBlockState blockState() {
+        return blockState;
+    }
+
+    /**
+     * Gets the item ID representing the scarecrow type being broken.
+     *
+     * @return the scarecrow item ID.
+     */
+    public String scarecrowItemID() {
+        return scarecrowItemID;
     }
 }

@@ -1,16 +1,17 @@
 name: CustomCrops
-version: '${version}'
-main: net.momirealms.customcrops.CustomCropsPluginImpl
+version: '${project_version}'
+main: net.momirealms.customcrops.bukkit.BukkitBootstrap
 api-version: 1.17
 load: POSTWORLD
 authors: [ XiaoMoMi ]
 folia-supported: true
-depend:
-  - ProtocolLib
 softdepend:
   - Vault
+  - CraftEngine
   - ItemsAdder
   - Oraxen
+  - Nexo
+  - MythicCrucible
   - PlaceholderAPI
   - BattlePass
   - BetonQuest
@@ -18,27 +19,6 @@ softdepend:
   - RealisticSeasons
   - AdvancedSeasons
   - SlimeWorldManager
-  - HuskClaims
-  - HuskTowns
-  - Residence
-  - BentoBox
-  - FabledSkyBlock
-  - CrashClaim
-  - GriefDefender
-  - GriefPrevention
-  - BentoBox
-  - IridiumSkyblock
-  - KingdomsX
-  - Landlord
-  - Lands
-  - PlotSquared
-  - ProtectionStones
-  - RedProtect
-  - Factions
-  - SuperiorSkyblock2
-  - Towny
-  - UltimateClaims
-  - UltimateClans
-  - uSkyBlock
-  - WorldGuard
-  - XClaim
+  - SlimeWorldPlugin
+  - MythicMobs
+  - WorldEdit
