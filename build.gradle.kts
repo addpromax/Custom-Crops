@@ -31,9 +31,9 @@ subprojects {
     }
 }
 
-fun versionBanner() = project.providers.exec {
-    commandLine("git", "rev-parse", "--short=8", "HEAD")
-}.standardOutput.asText.map { it.trim() }.getOrElse("Unknown")
+val versionBanner: Provider<String> = providers.exec {
+commandLine("git", "rev-parse", "--short=8", "HEAD")
+}.standardOutput.asText.map { it.trim() }.orElse("Unknown")
 
 fun builder() = project.providers.exec {
     commandLine("git", "config", "user.name")
