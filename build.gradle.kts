@@ -6,9 +6,6 @@ plugins {
     id("com.gradleup.shadow") version "9.0.0-beta11"
 }
 
-val builder : String = builder()
-ext["builder"] = builder
-
 subprojects {
     apply(plugin = "java")
     apply(plugin = "com.gradleup.shadow")
@@ -28,7 +25,3 @@ subprojects {
         }
     }
 }
-
-fun builder() = project.providers.exec {
-    commandLine("git", "config", "user.name")
-}.standardOutput.asText.map { it.trim() }.getOrElse("Unknown")
