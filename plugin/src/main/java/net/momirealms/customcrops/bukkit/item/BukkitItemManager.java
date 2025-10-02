@@ -25,6 +25,7 @@ import net.momirealms.customcrops.api.core.*;
 import net.momirealms.customcrops.api.core.block.BreakReason;
 import net.momirealms.customcrops.api.core.block.CustomCropsBlock;
 import net.momirealms.customcrops.api.core.item.CustomCropsItem;
+import net.momirealms.customcrops.api.core.mechanic.crop.CropConfig;
 import net.momirealms.customcrops.api.core.world.CustomCropsBlockState;
 import net.momirealms.customcrops.api.core.world.CustomCropsWorld;
 import net.momirealms.customcrops.api.core.world.Pos3;
@@ -39,10 +40,11 @@ import net.momirealms.customcrops.api.util.LocationUtils;
 import net.momirealms.customcrops.api.util.PluginUtils;
 import net.momirealms.customcrops.common.helper.VersionHelper;
 import net.momirealms.customcrops.common.item.Item;
-import org.bukkit.Registry;
 import org.bukkit.*;
+import org.bukkit.Registry;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.LivingEntity;
@@ -64,7 +66,6 @@ import java.util.*;
 import static java.util.Objects.requireNonNull;
 
 public class BukkitItemManager extends AbstractItemManager {
-
     private final BukkitCustomCropsPlugin plugin;
     private CustomItemProvider provider;
     private AbstractCustomEventListener eventListener;
@@ -264,9 +265,10 @@ public class BukkitItemManager extends AbstractItemManager {
 
     @Override
     public void placeBlock(@NotNull Location location, @NotNull String id) {
-        if (id.startsWith("minecraft:")) {
-            location.getWorld().getBlockAt(location).setBlockData(Bukkit.createBlockData(id), false);
-        } else {
+        try {
+            BlockData blockData = Bukkit.createBlockData(id);
+            location.getWorld().getBlockAt(location).setBlockData(blockData, false);
+        } catch (IllegalArgumentException e) {
             this.provider.placeCustomBlock(location, id);
         }
     }
@@ -527,7 +529,6 @@ public class BukkitItemManager extends AbstractItemManager {
         if (wrapped.hand() == EquipmentSlot.OFF_HAND && player.hasMetadata("customcrops_tick")) {
             List<MetadataValue> list = player.getMetadata("customcrops_tick");
             if (!list.isEmpty() && player.getTicksLived() == list.get(0).asInt()) {
-                player.removeMetadata("customcrops_tick", plugin.getBootstrap());
                 return;
             }
         }

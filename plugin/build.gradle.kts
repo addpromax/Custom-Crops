@@ -49,6 +49,7 @@ tasks {
         from(zipTree(project(":compatibility-itemsadder-r2").tasks.jar.get().archiveFile))
         from(zipTree(project(":compatibility-crucible-r1").tasks.jar.get().archiveFile))
         from(zipTree(project(":compatibility-craftengine-r1").tasks.jar.get().archiveFile))
+        from(zipTree(project(":plugin:j21").tasks.jar.get().archiveFile))
         archiveFileName = "CustomCrops-${rootProject.properties["project_version"]}.jar"
         destinationDirectory.set(file("$rootDir/target"))
         relocate("net.kyori", "net.momirealms.customcrops.libraries")
@@ -69,15 +70,15 @@ artifacts {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
-    options.release.set(17)
+    options.release.set(21)
     dependsOn(tasks.clean)
 }

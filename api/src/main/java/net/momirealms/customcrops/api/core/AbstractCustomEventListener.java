@@ -28,6 +28,7 @@ import net.momirealms.customcrops.api.core.mechanic.pot.PotConfig;
 import net.momirealms.customcrops.api.core.mechanic.sprinkler.SprinklerConfig;
 import net.momirealms.customcrops.api.core.world.CustomCropsBlockState;
 import net.momirealms.customcrops.api.core.world.CustomCropsWorld;
+import net.momirealms.customcrops.api.core.world.ExplosionIndicator;
 import net.momirealms.customcrops.api.core.world.Pos3;
 import net.momirealms.customcrops.api.event.BoneMealDispenseEvent;
 import net.momirealms.customcrops.api.util.EventUtils;
@@ -54,11 +55,13 @@ import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import java.lang.reflect.Constructor;
 import java.util.*;
 
 public abstract class AbstractCustomEventListener implements Listener {
     private final HashSet<EntityType> entities = new HashSet<>();
     private final HashSet<Material> blocks = new HashSet<>();
+    private final ExplosionIndicator explosionIndicator;
 
     protected Set<Material> ignoredMaterials() {
         return blocks;
@@ -87,6 +90,17 @@ public abstract class AbstractCustomEventListener implements Listener {
         }
         if (VersionHelper.isVersionNewerThan1_20()) {
             this.blocks.add(Material.CHERRY_LEAVES);
+        }
+        if (!VersionHelper.isVersionNewerThan1_21()) {
+            this.explosionIndicator = new ExplosionIndicator.AlwaysTrue();
+        } else {
+            try {
+                Class<?> clazz = Class.forName("net.momirealms.customcrops.bukkit.j21.ModernExplosionIndicator");
+                Constructor<?> constructor = clazz.getConstructor();
+                this.explosionIndicator = (ExplosionIndicator) constructor.newInstance();
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException("Failed to init ", e);
+            }
         }
     }
 
@@ -192,7 +206,9 @@ public abstract class AbstractCustomEventListener implements Listener {
         String itemID = this.itemManager.id(itemStack);
 
         if (Registries.STAGE_TO_CROP_UNSAFE.containsKey(itemID)) {
-            event.setCancelled(true);
+            if (ConfigManager.preventDroppingStageItems()) {
+                event.setCancelled(true);
+            }
             return;
         }
 
@@ -315,6 +331,9 @@ public abstract class AbstractCustomEventListener implements Listener {
 
     @EventHandler (ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onExplosion(EntityExplodeEvent event) {
+        if (!this.explosionIndicator.canDestroyBlocks(event)) {
+            return;
+        }
         Entity entity = event.getEntity();
         for (Block block : event.blockList()) {
             this.itemManager.handleEntityExplode(entity, block.getLocation(), this.itemManager.blockID(block), event);
@@ -420,4 +439,18 @@ public abstract class AbstractCustomEventListener implements Listener {
         Block block = event.getBlock();
         itemManager.handlePhysicsBreak(block.getLocation(), block.getBlockData().getAsString(), event);
     }
+
+//    @EventHandler(ignoreCancelled = true)
+//    public void onBlockBreak(BlockBreakBlockEvent event) {
+//        Block block = event.getBlock();
+//        itemManager.handlePhysicsBreak(block.getLocation(), block.getBlockData().getAsString(), new Cancellable() {
+//            @Override
+//            public boolean isCancelled() {
+//                return false;
+//            }
+//            @Override
+//            public void setCancelled(boolean b) {
+//            }
+//        });
+//    }
 }

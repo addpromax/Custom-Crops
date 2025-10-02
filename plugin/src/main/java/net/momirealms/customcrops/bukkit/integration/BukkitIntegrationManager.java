@@ -64,27 +64,44 @@ public class BukkitIntegrationManager implements IntegrationManager {
     @Override
     public void load() {
         registerEntityProvider(new VanillaEntityProvider());
-        if (isHooked("MMOItems")) {
-            registerItemProvider(new MMOItemsItemProvider());
-        }
-        if (isHooked("Zaphkiel")) {
-            registerItemProvider(new ZaphkielItemProvider());
-        }
-        if (isHooked("ExecutableItems")) {
-            registerItemProvider(new ExecutableItemProvider());
-        }
-        if (isHooked("NeigeItems")) {
-            registerItemProvider(new NeigeItemsItemProvider());
-        }
         if (isHooked("ItemsAdder")) {
             registerEntityProvider(new ItemsAdderEntityProvider());
         }
-        if (isHooked("CustomFishing", "2.2", "2.3", "2.4")) {
-            registerItemProvider(new CustomFishingItemProvider());
+        if (isHooked("RealisticSeasons")) {
+            registerSeasonProvider(new RealisticSeasonsProvider());
+        } else if (isHooked("AdvancedSeasons")) {
+            registerSeasonProvider(new AdvancedSeasonsProvider());
+        }
+        if (isHooked("Vault")) {
+            VaultHook.init();
+        }
+        if (isHooked("PlaceholderAPI")) {
+            new CustomCropsPapi(plugin).load();
+        }
+        if (isHooked("BattlePass")){
+            BattlePassQuest battlePassQuest = new BattlePassQuest();
+            battlePassQuest.register();
+        }
+        if (isHooked("ClueScrolls")) {
+            ClueScrollsQuest clueScrollsQuest = new ClueScrollsQuest();
+            clueScrollsQuest.register();
+        }
+        if (isHooked("BetonQuest", "2")) {
+            BetonQuestQuest.register();
+        }
+        if (isHooked("WorldGuard", "7")) {
+            WorldGuardRegion.register();
         }
         if (isHooked("MythicMobs", "5")) {
             registerItemProvider(new MythicMobsItemProvider());
             registerEntityProvider(new MythicEntityProvider());
+        }
+    }
+
+    @Override
+    public void delayedLoad() {
+        if (isHooked("CustomFishing", "2.2", "2.3", "2.4")) {
+            registerItemProvider(new CustomFishingItemProvider());
         }
         if (isHooked("EcoJobs")) {
             registerLevelerProvider(new EcoJobsLevelerProvider());
@@ -107,30 +124,17 @@ public class BukkitIntegrationManager implements IntegrationManager {
         if (isHooked("AuraSkills")) {
             registerLevelerProvider(new AuraSkillsLevelerProvider());
         }
-        if (isHooked("RealisticSeasons")) {
-            registerSeasonProvider(new RealisticSeasonsProvider());
-        } else if (isHooked("AdvancedSeasons", "1.4", "1.5", "1.6")) {
-            registerSeasonProvider(new AdvancedSeasonsProvider());
+        if (isHooked("MMOItems")) {
+            registerItemProvider(new MMOItemsItemProvider());
         }
-        if (isHooked("Vault")) {
-            VaultHook.init();
+        if (isHooked("Zaphkiel")) {
+            registerItemProvider(new ZaphkielItemProvider());
         }
-        if (isHooked("PlaceholderAPI")) {
-            new CustomCropsPapi(plugin).load();
+        if (isHooked("ExecutableItems")) {
+            registerItemProvider(new ExecutableItemProvider());
         }
-        if (isHooked("BattlePass")){
-            BattlePassQuest battlePassQuest = new BattlePassQuest();
-            battlePassQuest.register();
-        }
-        if (isHooked("ClueScrolls")) {
-            ClueScrollsQuest clueScrollsQuest = new ClueScrollsQuest();
-            clueScrollsQuest.register();
-        }
-        if (isHooked("BetonQuest", "2")) {
-            BetonQuestQuest.register();
-        }
-        if (isHooked("WorldGuard", "7")) {
-            WorldGuardRegion.register();
+        if (isHooked("NeigeItems")) {
+            registerItemProvider(new NeigeItemsItemProvider());
         }
     }
 

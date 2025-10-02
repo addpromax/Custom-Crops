@@ -1,5 +1,6 @@
 repositories {
     mavenCentral()
+    maven("https://repo.nexomc.com/releases/")
     maven("https://repo.nexomc.com/snapshots/")
     maven("https://repo.papermc.io/repository/maven-public/")
 }
@@ -7,7 +8,7 @@ repositories {
 dependencies {
     compileOnly(project(":api"))
     compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
-    compileOnly("com.nexomc:nexo:1.1.0-dev.3")
+    compileOnly("com.nexomc:nexo:1.8.0")
 }
 
 tasks.withType<JavaCompile> {
