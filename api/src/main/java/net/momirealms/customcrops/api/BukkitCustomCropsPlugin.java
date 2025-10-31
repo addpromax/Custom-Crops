@@ -22,6 +22,7 @@ import net.momirealms.customcrops.api.core.AbstractItemManager;
 import net.momirealms.customcrops.api.core.ConfigManager;
 import net.momirealms.customcrops.api.core.RegistryAccess;
 import net.momirealms.customcrops.api.core.world.WorldManager;
+import net.momirealms.customcrops.api.data.HarvestDataManager;
 import net.momirealms.customcrops.api.integration.IntegrationManager;
 import net.momirealms.customcrops.api.misc.cooldown.CoolDownManager;
 import net.momirealms.customcrops.api.misc.placeholder.PlaceholderManager;
@@ -61,6 +62,7 @@ public abstract class BukkitCustomCropsPlugin implements CustomCropsPlugin {
     protected RegistryAccess registryAccess;
     protected SenderFactory<BukkitCustomCropsPlugin, CommandSender> senderFactory;
     protected CustomCropsAPI api;
+    protected HarvestDataManager harvestDataManager;
 
     protected final Map<Class<?>, ActionManager<?>> actionManagers = new HashMap<>();
     protected final Map<Class<?>, RequirementManager<?>> requirementManagers = new HashMap<>();
@@ -209,6 +211,16 @@ public abstract class BukkitCustomCropsPlugin implements CustomCropsPlugin {
      */
     public CustomCropsAPI getAPI() {
         return api;
+    }
+
+    /**
+     * Retrieves the HarvestDataManager.
+     *
+     * @return the {@link HarvestDataManager}
+     */
+    @NotNull
+    public HarvestDataManager getHarvestDataManager() {
+        return harvestDataManager;
     }
 
     /**

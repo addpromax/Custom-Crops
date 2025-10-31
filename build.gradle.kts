@@ -1,3 +1,6 @@
+import java.io.ByteArrayOutputStream
+import org.gradle.process.internal.ExecException
+
 plugins {
     id("java")
     id("com.gradleup.shadow") version "9.0.0-beta11"

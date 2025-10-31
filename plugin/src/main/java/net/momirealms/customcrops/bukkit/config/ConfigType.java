@@ -33,6 +33,7 @@ import net.momirealms.customcrops.api.core.mechanic.pot.PotConfig;
 import net.momirealms.customcrops.api.core.mechanic.sprinkler.SprinklerConfig;
 import net.momirealms.customcrops.api.core.mechanic.wateringcan.WateringCanConfig;
 import net.momirealms.customcrops.api.core.world.CustomCropsBlockState;
+import net.momirealms.customcrops.api.core.world.Season;
 import net.momirealms.customcrops.api.misc.value.TextValue;
 import net.momirealms.customcrops.api.misc.water.WaterBar;
 import net.momirealms.customcrops.api.requirement.RequirementManager;
@@ -201,6 +202,12 @@ public class ConfigType {
                     }
                 }
 
+                // Extract season information from plant requirements
+                Set<Season> seasons = extractSeasons(section.getSection("requirements.plant"));
+                
+                // Extract display name (if exists)
+                String displayName = section.getString("display-name", id);
+
                 CropConfig config = CropConfig.builder()
                         .id(id)
                         .seed(getAsStringList(section.get("seed")))
@@ -221,6 +228,8 @@ public class ConfigType {
                         .deathConditions(manager.getDeathConditions(section.getSection("death-conditions"), form))
                         .growConditions(manager.getGrowConditions(section.getSection("grow-conditions")))
                         .stages(builders)
+                        .seasons(seasons)
+                        .displayName(displayName)
                         .build();
 
                 manager.registerCropConfig(config);
@@ -350,5 +359,44 @@ public class ConfigType {
             }
         }
         return list;
+    }
+
+    /**
+     * Extracts season information from plant requirements section
+     * @param requirementsSection The requirements section from YAML
+     * @return Set of seasons for this crop
+     */
+    private static Set<Season> extractSeasons(Section requirementsSection) {
+        Set<Season> seasons = new HashSet<>();
+        if (requirementsSection == null) {
+            return seasons;
+        }
+
+        for (Map.Entry<String, Object> entry : requirementsSection.getStringRouteMappedValues(false).entrySet()) {
+            if (entry.getValue() instanceof Section reqSection) {
+                Object typeObj = reqSection.get("type");
+                if (typeObj != null) {
+                    String type = typeObj.toString().toLowerCase(Locale.ENGLISH);
+                    // Check if this is a season requirement
+                    if (type.equals("season") || type.equals("suitable-season") || type.equals("suitable_season")) {
+                        Object valueObj = reqSection.get("value");
+                        if (valueObj != null) {
+                            List<String> seasonStrings = getAsStringList(valueObj);
+                            for (String seasonStr : seasonStrings) {
+                                try {
+                                    Season season = Season.valueOf(seasonStr.toUpperCase(Locale.ENGLISH));
+                                    seasons.add(season);
+                                } catch (IllegalArgumentException e) {
+                                    // Invalid season name, skip
+                                    BukkitCustomCropsPlugin.getInstance().getPluginLogger().warn("Invalid season name: " + seasonStr);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return seasons;
     }
 }

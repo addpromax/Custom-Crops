@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 import net.momirealms.customcrops.api.action.Action;
 import net.momirealms.customcrops.api.core.ExistenceForm;
 import net.momirealms.customcrops.api.core.world.CustomCropsBlockState;
+import net.momirealms.customcrops.api.core.world.Season;
 import net.momirealms.customcrops.api.requirement.Requirement;
 import org.bukkit.entity.Player;
 
@@ -52,6 +53,8 @@ public class CropConfigImpl implements CropConfig {
     private final HashMap<Integer, CropStageConfig> cropStageWithModelMap = new HashMap<>();
     private final boolean ignoreScheduledTick;
     private final boolean ignoreRandomTick;
+    private final Set<Season> seasons;
+    private final String displayName;
 
     public CropConfigImpl(
             String id,
@@ -73,7 +76,9 @@ public class CropConfigImpl implements CropConfig {
             Set<String> potWhitelist,
             Collection<CropStageConfig.Builder> stageBuilders,
             boolean ignoreScheduledTick,
-            boolean ignoreRandomTick
+            boolean ignoreRandomTick,
+            Set<Season> seasons,
+            String displayName
     ) {
         this.id = id;
         this.seed = seed;
@@ -94,6 +99,8 @@ public class CropConfigImpl implements CropConfig {
         this.potWhitelist = potWhitelist;
         this.ignoreRandomTick = ignoreRandomTick;
         this.ignoreScheduledTick = ignoreScheduledTick;
+        this.seasons = seasons != null ? new HashSet<>(seasons) : new HashSet<>();
+        this.displayName = displayName != null && !displayName.isEmpty() ? displayName : id;
         for (CropStageConfig.Builder builder : stageBuilders) {
             CropStageConfig config = builder.crop(this).build();
             point2Stages.put(config.point(), config);
@@ -249,6 +256,68 @@ public class CropConfigImpl implements CropConfig {
         return ignoreRandomTick;
     }
 
+    @Override
+    public Set<Season> getSeasons() {
+        return new HashSet<>(seasons);
+    }
+
+    @Override
+    public String getDisplayName() {
+        // 如果displayName未设置或就是ID本身，尝试从物品ItemStack中提取
+        if (displayName == null || displayName.equals(id)) {
+            return extractDisplayNameFromItem();
+        }
+        return displayName;
+    }
+    
+    /**
+     * 从物品ItemStack中提取显示名称
+     * 使用 Adventure API 直接获取 Component 并序列化
+     */
+    private String extractDisplayNameFromItem() {
+        try {
+            if (seed != null && !seed.isEmpty()) {
+                String itemId = seed.get(0);
+                
+                // 通过CustomCrops的ItemManager构建物品
+                Class<?> pluginClass = Class.forName("net.momirealms.customcrops.api.BukkitCustomCropsPlugin");
+                Object plugin = pluginClass.getMethod("getInstance").invoke(null);
+                if (plugin == null) return id;
+                
+                Object itemManager = pluginClass.getMethod("getItemManager").invoke(plugin);
+                if (itemManager == null) return id;
+                
+                // 构建ItemStack
+                Object itemStack = itemManager.getClass()
+                    .getMethod("build", Class.forName("org.bukkit.entity.Player"), String.class)
+                    .invoke(itemManager, null, itemId);
+                if (itemStack == null) return id;
+                
+                // 获取 ItemMeta 并读取 Adventure Component
+                Object itemMeta = itemStack.getClass().getMethod("getItemMeta").invoke(itemStack);
+                if (itemMeta != null) {
+                    // 使用 Adventure API 的 displayName() 方法
+                    Object component = itemMeta.getClass().getMethod("displayName").invoke(itemMeta);
+                    if (component != null) {
+                        // 使用 LegacyComponentSerializer 序列化（保留颜色代码）
+                        Class<?> serializerClass = Class.forName("net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer");
+                        Object serializer = serializerClass.getMethod("legacySection").invoke(null);
+                        String text = (String) serializer.getClass()
+                            .getMethod("serialize", Class.forName("net.kyori.adventure.text.Component"))
+                            .invoke(serializer, component);
+                        
+                        if (text != null && !text.isEmpty()) {
+                            return text;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // 如果提取失败，返回ID
+        }
+        return id;
+    }
+
     public static class BuilderImpl implements Builder {
         private String id;
         private List<String> seed;
@@ -271,10 +340,12 @@ public class CropConfigImpl implements CropConfig {
         private Collection<CropStageConfig.Builder> stages;
         private boolean ignoreScheduledTick;
         private boolean ignoreRandomTick;
+        private Set<Season> seasons;
+        private String displayName;
 
         @Override
         public CropConfig build() {
-            return new CropConfigImpl(id, seed, maxPoints, wrongPotActions, interactActions, breakActions, plantActions, reachLimitActions, deathActions, plantRequirements, breakRequirements, interactRequirements, growConditions, deathConditions, boneMeals, rotation, potWhitelist, stages, ignoreScheduledTick, ignoreRandomTick);
+            return new CropConfigImpl(id, seed, maxPoints, wrongPotActions, interactActions, breakActions, plantActions, reachLimitActions, deathActions, plantRequirements, breakRequirements, interactRequirements, growConditions, deathConditions, boneMeals, rotation, potWhitelist, stages, ignoreScheduledTick, ignoreRandomTick, seasons, displayName);
         }
 
         @Override
@@ -393,6 +464,16 @@ public class CropConfigImpl implements CropConfig {
         @Override
         public Builder ignoreScheduledTick(boolean ignoreScheduledTick) {
             this.ignoreScheduledTick = ignoreScheduledTick;
+            return this;
+        }
+
+        public Builder seasons(Set<Season> seasons) {
+            this.seasons = seasons;
+            return this;
+        }
+
+        public Builder displayName(String displayName) {
+            this.displayName = displayName;
             return this;
         }
     }

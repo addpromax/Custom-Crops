@@ -202,6 +202,23 @@ public interface CropConfig {
     Map.Entry<Integer, CropStageConfig> getFloorStageEntry(int previousPoint);
 
     /**
+     * Gets the seasons in which this crop can be planted.
+     * Returns an empty set if no season restrictions apply (can be planted all year).
+     *
+     * @return A set of {@link net.momirealms.customcrops.api.core.world.Season} objects.
+     */
+    Set<net.momirealms.customcrops.api.core.world.Season> getSeasons();
+
+    /**
+     * Gets the display name of this crop.
+     * This returns a user-friendly name for the crop, useful for GUIs and messages.
+     * If no display name is set, returns the crop ID.
+     *
+     * @return The display name of the crop.
+     */
+    String getDisplayName();
+
+    /**
      * Creates a new builder instance for constructing a {@link CropConfig}.
      *
      * @return A new {@link Builder} instance.
@@ -388,5 +405,21 @@ public interface CropConfig {
          * @return The current instance of the Builder.
          */
         Builder ignoreScheduledTick(boolean ignoreScheduledTick);
+
+        /**
+         * Sets the seasons in which this crop can be planted
+         *
+         * @param seasons A set of seasons
+         * @return The current instance of the Builder.
+         */
+        Builder seasons(Set<net.momirealms.customcrops.api.core.world.Season> seasons);
+
+        /**
+         * Sets the display name for this crop
+         *
+         * @param displayName The display name
+         * @return The current instance of the Builder.
+         */
+        Builder displayName(String displayName);
     }
 }

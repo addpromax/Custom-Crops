@@ -15,6 +15,9 @@ repositories {
 dependencies {
     implementation("com.flowpowered:flow-nbt:${rootProject.properties["flow_nbt_version"]}")
     implementation(files("libs/boosted-yaml-${rootProject.properties["boosted_yaml_version"]}.jar"))
+    // Database dependencies
+    implementation("org.xerial:sqlite-jdbc:3.47.1.0")
+    implementation("com.zaxxer:HikariCP:6.2.1")
     compileOnly("net.kyori:adventure-api:${rootProject.properties["adventure_bundle_version"]}") {
         exclude(module = "adventure-bom")
         exclude(module = "checker-qual")

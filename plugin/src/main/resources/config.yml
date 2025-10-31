@@ -155,3 +155,35 @@ other-settings:
   # Prevents crop stage items from dropping
   # As some custom block plugins don't know how to handle loot table correctly
   prevent-dropping-stage-items: true
+  # Harvest data tracking system
+  harvest-data:
+    # Enable harvest tracking
+    enable: true
+    # Database type: sqlite / mysql
+    storage-type: sqlite
+    # Cache settings
+    cache:
+      # Cache time in seconds before writing to database (prevents excessive database writes)
+      flush-delay: 3
+      # Keep player data in cache for X seconds after disconnection (0 = remove immediately)
+      keep-after-quit: 5
+    # SQLite settings (only used when storage-type is sqlite)
+    sqlite:
+      # Database file location: plugins/CustomCrops/harvest-data.db
+      enabled: true
+    # MySQL settings (only used when storage-type is mysql)
+    mysql:
+      host: localhost
+      port: 3306
+      database: customcrops
+      username: root
+      password: ''
+      # Table prefix for harvest data
+      table-prefix: 'cc_'
+      # HikariCP connection pool settings
+      pool:
+        maximum-pool-size: 10
+        minimum-idle: 2
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000

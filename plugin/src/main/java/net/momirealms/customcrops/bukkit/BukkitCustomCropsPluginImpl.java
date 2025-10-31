@@ -28,6 +28,7 @@ import net.momirealms.customcrops.api.core.item.SprinklerItem;
 import net.momirealms.customcrops.api.core.item.WateringCanItem;
 import net.momirealms.customcrops.api.core.mechanic.fertilizer.FertilizerType;
 import net.momirealms.customcrops.api.core.world.CustomCropsBlockState;
+import net.momirealms.customcrops.api.data.HarvestDataManager;
 import net.momirealms.customcrops.api.event.CustomCropsReloadEvent;
 import net.momirealms.customcrops.api.misc.HologramManager;
 import net.momirealms.customcrops.api.misc.cooldown.CoolDownManager;
@@ -41,6 +42,8 @@ import net.momirealms.customcrops.bukkit.config.BukkitConfigManager;
 import net.momirealms.customcrops.bukkit.integration.BukkitIntegrationManager;
 import net.momirealms.customcrops.bukkit.integration.worldedit.WorldEditHook;
 import net.momirealms.customcrops.bukkit.item.BukkitItemManager;
+import net.momirealms.customcrops.bukkit.integration.placeholder.HarvestPlaceholderExpansion;
+import net.momirealms.customcrops.bukkit.listener.HarvestTracker;
 import net.momirealms.customcrops.bukkit.requirement.BlockRequirementManager;
 import net.momirealms.customcrops.bukkit.requirement.PlayerRequirementManager;
 import net.momirealms.customcrops.bukkit.scheduler.BukkitSchedulerAdapter;
@@ -160,8 +163,12 @@ public class BukkitCustomCropsPluginImpl extends BukkitCustomCropsPlugin {
         this.placeholderManager = new BukkitPlaceholderManager(this);
         this.coolDownManager = new CoolDownManager(this);
         this.hologramManager = new HologramManager(this);
+        this.harvestDataManager = new HarvestDataManager(this);
         this.commandManager = new BukkitCommandManager(this);
         this.commandManager.registerDefaultFeatures();
+
+        // Register harvest tracker
+        Bukkit.getPluginManager().registerEvents(new HarvestTracker(this, this.harvestDataManager), getBootstrap());
 
         boolean downloadFromPolymart = polymart.equals("1");
         boolean downloadFromBBB = buildByBit.equals("true");
@@ -199,6 +206,15 @@ public class BukkitCustomCropsPluginImpl extends BukkitCustomCropsPlugin {
             } catch (Exception e) {
                 this.logger.severe("Failed to load integrations", e);
             }
+            // Register PlaceholderAPI expansion
+            if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+                try {
+                    new HarvestPlaceholderExpansion(this).register();
+                    this.logger.info("PlaceholderAPI expansion registered successfully");
+                } catch (Exception e) {
+                    this.logger.severe("Failed to register PlaceholderAPI expansion", e);
+                }
+            }
             EventUtils.fireAndForget(new CustomCropsReloadEvent(this));
             ((BukkitItemManager) itemManager).setAntiGriefLib(AntiGriefLib.builder((JavaPlugin) getBootstrap()).silentLogs(true).ignoreOP(true).build());
         };
@@ -216,6 +232,9 @@ public class BukkitCustomCropsPluginImpl extends BukkitCustomCropsPlugin {
         debug(() -> "Disabling worldManager");
         this.worldManager.disable();
         debug(() -> "Disabled worldManager");
+        debug(() -> "Saving harvest data");
+        this.harvestDataManager.disable();
+        debug(() -> "Saved harvest data");
         this.placeholderManager.disable();
         this.hologramManager.disable();
         this.integrationManager.disable();
@@ -240,6 +259,7 @@ public class BukkitCustomCropsPluginImpl extends BukkitCustomCropsPlugin {
         this.translationManager.reload();
         this.hologramManager.reload();
         this.itemManager.reload();
+        this.harvestDataManager.reload();
 
         this.actionManagers.values().forEach(Reloadable::reload);
         this.requirementManagers.values().forEach(Reloadable::reload);
