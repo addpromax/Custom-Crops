@@ -24,7 +24,6 @@ import net.momirealms.customcrops.bukkit.integration.entity.MythicEntityProvider
 import net.momirealms.customcrops.bukkit.integration.entity.VanillaEntityProvider;
 import net.momirealms.customcrops.bukkit.integration.item.*;
 import net.momirealms.customcrops.bukkit.integration.level.*;
-import net.momirealms.customcrops.bukkit.integration.papi.CustomCropsPapi;
 import net.momirealms.customcrops.bukkit.integration.quest.BattlePassQuest;
 import net.momirealms.customcrops.bukkit.integration.quest.BetonQuestQuest;
 import net.momirealms.customcrops.bukkit.integration.quest.ClueScrollsQuest;
@@ -75,9 +74,7 @@ public class BukkitIntegrationManager implements IntegrationManager {
         if (isHooked("Vault")) {
             VaultHook.init();
         }
-        if (isHooked("PlaceholderAPI")) {
-            new CustomCropsPapi(plugin).load();
-        }
+        // PlaceholderAPI integration is handled in BukkitCustomCropsPluginImpl.enable()
         if (isHooked("BattlePass")){
             BattlePassQuest battlePassQuest = new BattlePassQuest();
             battlePassQuest.register();

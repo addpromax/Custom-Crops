@@ -21,12 +21,14 @@ import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import net.momirealms.customcrops.api.BukkitCustomCropsPlugin;
 import net.momirealms.customcrops.api.data.HarvestDataManager;
 import net.momirealms.customcrops.api.data.PlayerHarvestData;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * PlaceholderAPI expansion for harvest tracking system.
+ * PlaceholderAPI expansion for harvest tracking system and world data.
  * 
  * Supported placeholders:
  * - %customcrops_total_harvests% - Total harvest count
@@ -36,6 +38,10 @@ import org.jetbrains.annotations.Nullable;
  * - %customcrops_has_quality_<itemId>% - Returns true/false
  * - %customcrops_unique_crops% - Number of unique crops harvested
  * - %customcrops_unique_qualities% - Number of unique quality items obtained
+ * - %customcrops_season% - Current season of player's world
+ * - %customcrops_season_<worldName>% - Season of specific world
+ * - %customcrops_date% - Current date of player's world
+ * - %customcrops_date_<worldName>% - Date of specific world
  */
 public class HarvestPlaceholderExpansion extends PlaceholderExpansion {
 
@@ -72,7 +78,42 @@ public class HarvestPlaceholderExpansion extends PlaceholderExpansion {
 
     @Override
     @Nullable
-    public String onPlaceholderRequest(Player player, @NotNull String params) {
+    public String onRequest(OfflinePlayer offlinePlayer, @NotNull String params) {
+        String[] split = params.split("_", 2);
+        
+        switch (split[0]) {
+            case "season" -> {
+                if (split.length == 1) {
+                    Player player = offlinePlayer.getPlayer();
+                    if (player == null)
+                        return null;
+                    return plugin.getWorldManager().getSeason(player.getWorld()).translation();
+                } else {
+                    try {
+                        return plugin.getWorldManager().getSeason(Bukkit.getWorld(split[1])).translation();
+                    } catch (NullPointerException e) {
+                        plugin.getPluginLogger().severe("World " + split[1] + " does not exist");
+                    }
+                }
+            }
+            case "date" -> {
+                if (split.length == 1) {
+                    Player player = offlinePlayer.getPlayer();
+                    if (player == null)
+                        return null;
+                    return String.valueOf(plugin.getWorldManager().getDate(player.getWorld()));
+                } else {
+                    try {
+                        return String.valueOf(plugin.getWorldManager().getDate(Bukkit.getWorld(split[1])));
+                    } catch (NullPointerException e) {
+                        plugin.getPluginLogger().severe("World " + split[1] + " does not exist");
+                    }
+                }
+            }
+        }
+
+        // Handle harvest data placeholders - need online player for these
+        Player player = offlinePlayer.getPlayer();
         if (player == null) {
             return "";
         }
