@@ -201,7 +201,13 @@ public class BukkitWorldAdaptor extends AbstractWorldAdaptor<World> {
             long time2 = System.currentTimeMillis();
             BukkitCustomCropsPlugin.getInstance().debug(() -> "[" + world.worldName() + "] Took " + (time2-time1) + "ms to save region " + region.regionPos());
         } catch (IOException e) {
-            BukkitCustomCropsPlugin.getInstance().getPluginLogger().severe("[" + world.worldName() + "] Failed to save CustomCrops region data." + region.regionPos(), e);
+            // Check if this is a SlimeWorld - they use .slime files and store data in NBT ExtraData
+            File worldFolder = getWorldFolder(world.world());
+            if (worldFolder.getName().endsWith(".slime") || !worldFolder.isDirectory()) {
+                BukkitCustomCropsPlugin.getInstance().debug(() -> "[" + world.worldName() + "] Skipping region file save for SlimeWorld format (data saved in NBT)");
+            } else {
+                BukkitCustomCropsPlugin.getInstance().getPluginLogger().severe("[" + world.worldName() + "] Failed to save CustomCrops region data." + region.regionPos(), e);
+            }
         }
     }
 
