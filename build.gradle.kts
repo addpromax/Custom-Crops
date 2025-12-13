@@ -1,7 +1,7 @@
 
 plugins {
     id("java")
-    id("com.gradleup.shadow") version "9.2.2"
+    id("com.gradleup.shadow") version "9.3.0"
 }
 
 val git : String = versionBanner()
@@ -29,24 +29,10 @@ subprojects {
     }
 }
 
-fun versionBanner(): String {
-    return try {
-        val result = providers.exec {
-            commandLine("git", "rev-parse", "--short=8", "HEAD")
-        }.standardOutput.asText.get().trim()
-        result
-    } catch (e: Exception) {
-        "Unknown"
-    }
-}
+fun versionBanner(): String = project.providers.exec {
+    commandLine("git", "rev-parse", "--short=8", "HEAD")
+}.standardOutput.asText.map { it.trim() }.getOrElse("Unknown")
 
-fun builder(): String {
-    return try {
-        val result = providers.exec {
-            commandLine("git", "config", "user.name")
-        }.standardOutput.asText.get().trim()
-        result
-    } catch (e: Exception) {
-        "Unknown"
-    }
-}
+fun builder(): String = project.providers.exec {
+    commandLine("git", "config", "user.name")
+}.standardOutput.asText.map { it.trim() }.getOrElse("Unknown")
